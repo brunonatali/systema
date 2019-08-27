@@ -12,7 +12,7 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"BrunoNatali\\SysTema\\Telemetry\\": "src"
+			"BrunoNatali\\SysTema\\Telemetry\\": "telemetry\\src"
 		}
 	}
 }
