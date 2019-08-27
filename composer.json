@@ -1,0 +1,9 @@
+{
+    "name": "brunonatali/systema",
+    "description": "PHP modularity I/O system 4 communication.",
+    "license": "MIT",
+    "require": {
+        "php": ">=7.3",
+		"brunonatali/react": "^1.0"
+    }
+}
