@@ -11,10 +11,13 @@ $loop = Factory::create();
 final class TelemetryTest extends TelemetryClient
 {
     Private $telemetryClass;
+    Private $loop;
 
     function __construct(LoopInterface $loop)
     {
         $this->telemetryClass = new TelemetryClient($loop);
+
+        $this->loop = $loop;
     }
 
     public function basicTest(int $interations = 1000)
@@ -24,9 +27,16 @@ final class TelemetryTest extends TelemetryClient
         $this->functionTestTiny($interations);
 
         $this->telemetryClass->functionTelemetryStop('basicTest');
+
+        print_r($this->telemetryClass->returnTelemetryBenchVal('basicTest', 'function'));
     }
 
-    private function functionTestTiny(int $interations): boolean
+    public function stopTest()
+    {
+        $this->telemetryClass->stopTelemetry();
+    }
+
+    private function functionTestTiny(int $interations)
     {
         $temp = null;
         for($i = 0 ; $i <= $interations ; $i++){
@@ -36,7 +46,12 @@ final class TelemetryTest extends TelemetryClient
     }
 }
 
-$telemetry = new TelemetryTest($loop);
+$thisTelemetrytest = new TelemetryTest($loop);
+
+$loop->addTimer(1, function () use ($thisTelemetrytest) {
+    $thisTelemetrytest->basicTest();
+    $thisTelemetrytest->stopTest();
+});
 
 $loop->run();
 ?>
