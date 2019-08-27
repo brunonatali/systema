@@ -1,16 +1,14 @@
 <?php declare(strict_types=1);
 
-include_once("autoload/AutoLoad.php");
-
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Factory;
-use BrunoNatali\SysTema\TelemetryClient;
+use BrunoNatali\SysTema\Telemetry\TelemetryClient;
 
-require __DIR__ . '../../../../../vendor/autoload.php';
+require __DIR__ . '/../../../../../autoload.php';
 
 $loop = Factory::create();
 
-final class telemetryTest extends TelemetryClient
+final class TelemetryTest extends TelemetryClient
 {
     Private $telemetryClass;
 
@@ -38,7 +36,7 @@ final class telemetryTest extends TelemetryClient
     }
 }
 
-$telemetry = new telemetryTest($loop);
+$telemetry = new TelemetryTest($loop);
 
 $loop->run();
 ?>

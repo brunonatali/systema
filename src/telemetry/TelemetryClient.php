@@ -23,10 +23,11 @@
  *  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace SysTema\Telemetry;
+namespace BrunoNatali\SysTema;
 
 use React\EventLoop\LoopInterface;
 
+echo "------>" . PHP_EOL;
 
 /**
  * Do the system telemetry
