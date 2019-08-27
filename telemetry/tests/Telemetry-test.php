@@ -1,20 +1,14 @@
 <?php declare(strict_types=1);
 
-namespace SysTema\Telemetry;
-
 include_once("autoload/AutoLoad.php");
 
-include("SysTema\React\EventLoop\Factory.php");
-include("SysTema\React\EventLoop\LoopInterface.php");
-//use SysTema\React\EventLoop\LoopInterface;
-//use SysTema\React\EventLoop\Factory;
-use SysTema\TelemetryClient;
+use React\EventLoop\LoopInterface;
+use React\EventLoop\Factory;
+use BrunoNatali\SysTema\TelemetryClient;
 
-print_r(get_declared_classes());
-print_r(get_declared_interfaces());
+require __DIR__ . '../../../../../vendor/autoload.php';
 
-$eventLoopFactory = new Factory;
-$loop = $eventLoopFactory->create();
+$loop = Factory::create();
 
 final class telemetryTest extends TelemetryClient
 {
@@ -43,4 +37,8 @@ final class telemetryTest extends TelemetryClient
         }
     }
 }
+
+$telemetry = new telemetryTest($loop);
+
+$loop->run();
 ?>
