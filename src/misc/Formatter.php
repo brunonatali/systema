@@ -50,7 +50,7 @@ class Formatter
     function __construct(string $name, $id, array $config = [])
     {
         $this->name = $name;
-        $id = (string)$id;
+        $this->checkInputId($id);
         $this->id = $this->getId($id);
 
         $this->headerLenght = strlen($this->header);
@@ -65,8 +65,9 @@ class Formatter
 
     Public function encode(string &$data, $destination): int
     {
-        $destination = (string)$destination;
         try {
+            $this->checkInputId($destination);
+
             // {header}{len}{source}{destination}{if time stamp}{data}
             $data = $this->header . $this->getDataLenght($data) . $this->id . $this->getId($destination) . $this->getTimeStamp() . $data;
             return 0;
@@ -119,6 +120,20 @@ class Formatter
     {
         if(strlen($ID) > $this->idLenght) throw new InvalidArgumentException("getId() maximum ID lenght is " . $this->idLenght);
         return str_pad($ID, $this->idLenght, "0", STR_PAD_LEFT);
+    }
+
+    Private function checkInputId(&$ID)
+    {
+        switch(gettype($ID)){
+            case "integer":
+                $ID = (string)dechex($ID);
+                break;
+            case "string":
+                break;
+            default:
+                throw new InvalidArgumentException('Destination must be HEX or integer');
+                break;
+        }
     }
 
     Private function getDataLenght(string &$data): string
