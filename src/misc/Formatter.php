@@ -110,6 +110,11 @@ class Formatter
         return false;
     }
 
+    Public function getName(): string
+    {
+        return $this->name;
+    }
+
     Private function getTimeStamp(): string
     {
         if (!$this->timeStampAdd) return "";
