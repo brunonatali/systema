@@ -25,20 +25,48 @@
 
 namespace BrunoNatali\SysTema\Things;
 
-use BrunoNatali\SysTema\Misc\Formatter;
+use React\EventLoop\LoopInterface;
+use React\Socket\Connector;
 
-class Thing
+class Module extends Thing
 {
-    private $name;
-    private $id;
-    Public $formatter;
+    Private $loop;
 
-    function __construct($id, string $name = null)
+    Private $connector;
+    Private $connected = false;
+
+    Private $reconnectTime = 1; // Seconds
+
+    Public function connect(LoopInterface $loop)
     {
-        $this->id = $id;
-        $this->name = $name;
+        $this->connector = new React\Socket\UnixConnector($loop);
 
-        $this->formatter = new Formatter($name, $id);
+        $this->loop = $loop;
+
+        $this->tryConnect();
+    }
+
+    Private function tryConnect()
+    {
+        $that = &$this;
+
+        $this->connector->connect('/tmp/demo.sock')->then(
+            function (React\Socket\ConnectionInterface $connection) use ($that) {
+
+
+
+                $that->connected = true;
+            },
+            function (Exception $error) use ($that) {
+                $that->connected = false;
+                $this->loop->addTimer($this->reconnectTime, function () use ($that) {
+                    $that->tryConnect();
+                });
+            }
+        );
+
+
+
     }
 }
 
