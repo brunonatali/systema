@@ -24,8 +24,8 @@
  */
 
 namespace BrunoNatali\SysTema\Misc;
-
-class Format
+echo "-------------->".PHP_EOL;
+class Formatter
 {
     Private $name;
     Private $id;
