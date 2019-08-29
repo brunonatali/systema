@@ -24,14 +24,14 @@
  */
 
 namespace BrunoNatali\SysTema\Misc;
-echo "-------------->".PHP_EOL;
+
 class Formatter
 {
     Private $name;
     Private $id;
 
     Private $header = 'AA55';
-    private $headerLenght = strlen($this->header);
+    private $headerLenght;
 
     Private $timeStampAdd = false;
     Private $timeStampMicroTime = false;
@@ -50,9 +50,12 @@ class Formatter
     function __construct(string $name, $id, array $config = [])
     {
         $this->name = $name;
-        $this->id = $this->getId((string)$id);
+        $id = (string)$id;
+        $this->id = $this->getId($id);
 
-        $this->easyStore = new Store();
+        $this->headerLenght = strlen($this->header);
+
+        $this->easyStore = new Storage();
 
         $this->setArgs($config);
         if ($this->timeStampAdd) $this->timeStampLen = (int)strlen(($this->timeStampMicroTime ? (string)microtime(true) : (string)time()));
@@ -62,9 +65,10 @@ class Formatter
 
     Public function encode(string &$data, $destination): int
     {
+        $destination = (string)$destination;
         try {
             // {header}{len}{source}{destination}{if time stamp}{data}
-            $data = $this->header . $this->getDataLenght($data) . $this->id . $this->getId((string)$destination) . $this->getTimeStamp() . $data;
+            $data = $this->header . $this->getDataLenght($data) . $this->id . $this->getId($destination) . $this->getTimeStamp() . $data;
             return 0;
         } catch (InvalidArgumentException $e) {
             $this->lastErrorString = $e;
@@ -77,7 +81,7 @@ class Formatter
         //Check header
         if($this->header !== substr($data, 0, $this->headerLenght) && $this->buffer === null) {
             return false; // Data error
-        } else {
+        } else if ($this->buffer !== null) {
             // Try to recover data
             $data = $this->buffer . $data;
             $this->buffer = null;
@@ -97,6 +101,12 @@ class Formatter
             $data = substr($data, 0, $thisDataLen);
             return $this->decode($data);
         }
+    }
+
+    Public function getLastError()
+    {
+        if ($this->lastErrorString) return $this->lastErrorString;
+        return false;
     }
 
     Private function getTimeStamp(): string
@@ -132,8 +142,7 @@ class Formatter
     Private function getPayload()
     {
         // {header len}{data len}{source id len}{destination id len}{if time stamp len}
-        $this->payload = $this->headerLenght + $this->dataLenght + ($this->idLenght << 2) + ($this->timeStampAdd ? $this->timeStampLen : 0);
-
+        $this->payload = $this->headerLenght + $this->dataLenght + ($this->idLenght * 2) + ($this->timeStampAdd ? $this->timeStampLen : 0);
         $this->easyStore->newVar('decodeDestinationStartLen');
         $this->easyStore->setValByName('decodeDestinationStartLen', $this->payload - $this->idLenght - ($this->timeStampAdd ? $this->timeStampLen : 0));
     }

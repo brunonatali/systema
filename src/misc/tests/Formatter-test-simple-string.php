@@ -8,10 +8,19 @@ $theFormatterServer = new Formatter('theTestServer', 1);
 $theFormatterClient = new Formatter('theTestClient', 99);
 
 $clientString = 'Data to encode as a simple string';
-$toSentToServerString = $theFormatterClient->encode($clientString, 1); // Send data to server
-
-$receivedInServerString = $theFormatterServer->decode($toSentToServerString); // Receive data
-
-if ($toSentToServerString === $receivedInServerString)  echo "SIMPLE STRING TEST OK" . PHP_EOL;
-else echo "SIMPLE STRING TEST FAIL" . PHP_EOL;
+$toSentToServerString = $clientString; // Send data to server
+if ($theFormatterClient->encode($toSentToServerString, 1) === 0) {
+    $serverResult = $theFormatterServer->decode($toSentToServerString); // Receive data
+    if ($serverResult === 0) {
+        if ($toSentToServerString === $clientString)  echo "SIMPLE STRING TEST OK" . PHP_EOL;
+        else echo "SIMPLE STRING TEST FAIL (resultant string mismach)" . PHP_EOL;
+        var_dump($clientString, $toSentToServerString);
+    } else if ($serverResult) {
+        echo "SIMPLE STRING TEST FAIL (destination error -> " . $serverResult . ")" . PHP_EOL;
+    } else {
+        echo "SIMPLE STRING TEST FAIL (return false)" . PHP_EOL;
+    }
+} else {
+    echo "SIMPLE STRING TEST FAIL (" . $theFormatterClient->getLastError() . ")" . PHP_EOL;
+}
 ?>

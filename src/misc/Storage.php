@@ -25,9 +25,9 @@
 
 namespace BrunoNatali\SysTema\Misc;
 
-class Store
+class Storage
 {
-    $varNames = [];
+    Private $varNames = [];
 
     Public function newVar(string $name, $value = null)
     {
