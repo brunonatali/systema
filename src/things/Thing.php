@@ -31,7 +31,7 @@ class Collector
 {
     private $name;
     private $id;
-    Private $formatter;
+    Public $formatter;
 
     function __construct($id, string $name = null)
     {
@@ -40,18 +40,6 @@ class Collector
 
         $this->formatter = new Formatter($name, $id);
     }
-
-    Public function addThing(string $name = null): int
-    {
-        $thingsIndex = count($this->things);
-
-        $this->things[ $thingsIndex ] = new Thing();
-
-        return $thingsIndex;
-    }
-
-
-
 }
 
 ?>

@@ -49,12 +49,20 @@ class Collector
     {
         switch(gettype($identifier)){
             case "integer":
-                $ID = (string)dechex($ID);
+                if (isset($this->things[ $identifier ])) {
+                    $thisName = $this->things[ $identifier ]->formatter->getName();
+                    if (isset($this->names[ $thisName ])) unset($this->names[ $thisName ]);
+                    unset($this->things[ $identifier ]);
+                } else {
+                    throw new InvalidArgumentException('Thing identified by ' . $identifier . ' not exist.');
+                }
                 break;
             case "string":
                 if (isset($this->names[ $identifier ] && isset($this->things[ ($this->names[ $identifier ]) ]))) {
                     unset($this->things[ ($this->names[ $identifier ]) ]);
                     unset($this->names[ $identifier ]);
+                } else {
+                    throw new InvalidArgumentException('Thing identified by ' . $identifier . ' not exist.');
                 }
                 break;
             default:
