@@ -25,6 +25,7 @@
 
 namespace BrunoNatali\SysTema\Things;
 
+use BrunoNatali\SysTema\Things\ModulesDefines;
 use React\EventLoop\LoopInterface;
 use React\Socket\Connector;
 
@@ -50,23 +51,55 @@ class Module extends Thing
     {
         $that = &$this;
 
-        $this->connector->connect('/tmp/demo.sock')->then(
+        $this->connector->connect(MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS)->then(
             function (React\Socket\ConnectionInterface $connection) use ($that) {
-
-
-
                 $that->connected = true;
+
+                $connection->on('data', function ($data) {
+                    $this->processReceived(&$msg);
+                });
+                $connection->on('close', function () {
+                    $this->retryConnect();
+                });
+
+                if (!$that->authenticated) {
+                    $data = json_encode([
+                        'name' => $this->name,
+                        'request' => 'ID'
+                    ]);
+                    if ($that->formatter->encode($data, MANAGER_ID) === 0)
+                        $connection->write($data);
+                });
             },
             function (Exception $error) use ($that) {
-                $that->connected = false;
-                $this->loop->addTimer($this->reconnectTime, function () use ($that) {
-                    $that->tryConnect();
-                });
+                $this->retryConnect();
             }
         );
+    }
 
+    Private function retryConnect()
+    {
+        $this->authenticated = false;
+        $this->connected = false;
 
+        $that = &$this;
 
+        $this->loop->addTimer($this->reconnectTime, function () use ($that) {
+            $that->tryConnect();
+        });
+    }
+
+    Private function processReceived(&$msg)
+    {
+        $serverResult = $theFormatter->decode($msg); // Receive data
+        if ($serverResult === 0) {
+            if ($msg === $serverString) echo "SIMPLE STRING TEST OK" . PHP_EOL;
+            else echo "SIMPLE STRING TEST FAIL (resultant string mismach)" . PHP_EOL;
+            var_dump($serverString, $msg);
+        } else if ($serverResult) {
+            echo "SIMPLE STRING PRE-TEST FAIL (destination error -> " . $serverResult . ")" . PHP_EOL;
+            return $serverResult;
+        }
     }
 }
 

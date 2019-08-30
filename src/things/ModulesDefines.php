@@ -25,24 +25,17 @@
 
 namespace BrunoNatali\SysTema\Things;
 
-use BrunoNatali\SysTema\Misc\Formatter;
+define('MANAGER_ID', 0);
 
-class Thing
-{
-    private $name;
-    private $id;
-
-    Public $formatter;
-
-    Public $authenticated = false;
-
-    function __construct($id = 0, string $name = null)
-    {
-        $this->id = $id;
-        $this->name = $name;
-
-        $this->formatter = new Formatter($name, $id);
-    }
+if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+    //Handle windows, windows not accept unix sockets
+    //define('MANAGER_ADDRESS', '127.0.0.1');
+} else {
+    define('MANAGER_SOCKET_FOLDER', '/run/systema/');
+    define('MANAGER_ADDRESS', 'manager.sock');
 }
+
+define('MANAGER_ACCEPTED_REQUEST', ['ID' => 1]);
+
 
 ?>
