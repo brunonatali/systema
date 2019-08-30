@@ -23,9 +23,12 @@
  *  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace BrunoNatali\SysTema\Things;
+namespace BrunoNatali\SysTema\Defines;
 
-use BrunoNatali\SysTema\Managers\ManagerDefines;
+define('CONNECTION_REFUSED', 0xFFFFFFF0);
+define('CONNECTION_NOT_AUTHENTICATED', 0xFFFFFFF1);
 
-
+define('DESTINATION_MISMATCH', 0xFFFFFFF2);
+define('WRONG_REQUEST', 0xFFFFFFF3);
+define('ENCODED_DATA_ERROR', 0xFFFFFFF4);
 ?>

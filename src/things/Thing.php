@@ -26,11 +26,14 @@
 namespace BrunoNatali\SysTema\Things;
 
 use BrunoNatali\SysTema\Misc\Formatter;
+use React\Socket\ConnectionInterface;
 
 class Thing
 {
     private $name;
     private $id;
+    Private $address = null;
+    Private $connection = null;
 
     Public $formatter;
 
@@ -42,6 +45,21 @@ class Thing
         $this->name = $name;
 
         $this->formatter = new Formatter($name, $id);
+    }
+
+    Private function changeName($name)
+    {
+        $this->name = $name;
+    }
+
+    Private function changeAddress($address)
+    {
+        $this->address = $address;
+    }
+
+    Private function addConnection(ConnectionInterface &$conn)
+    {
+        $this->connection = &$conn;
     }
 }
 

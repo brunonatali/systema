@@ -33,11 +33,14 @@ class Collector
     private $names = [0];
 
 
-    Public function addThing(string $name = null): int
+    Public function addThing(string $name = null, $handled = false): int
     {
         $thingsIndex = count($this->things);
 
-        $this->things[ $thingsIndex ] = new Thing($thingsIndex, $name);
+        $this->things[ $thingsIndex ] = [
+            'thing' => new Thing($thingsIndex, $name),
+            'handled' => $handled
+        ];
         if ($name !== null && !is_bool($name)) {
             if (isset($this->names[ $name ])) throw new InvalidArgumentException('Name ' . $name . ' exists.');
             $this->names[ $name ] = $thingsIndex;

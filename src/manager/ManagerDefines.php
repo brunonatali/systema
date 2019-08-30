@@ -23,9 +23,17 @@
  *  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace BrunoNatali\SysTema\Things;
+namespace BrunoNatali\SysTema\Managers;
 
-use BrunoNatali\SysTema\Managers\ManagerDefines;
+define('MANAGER_NAME', 'manager');
+define('MANAGER_ID', 0);
+define('MANAGER_ACCEPTED_REQUEST', ['ID' => 1]);
 
-
+if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+    //Handle windows, windows not accept unix sockets
+    //define('MANAGER_ADDRESS', '127.0.0.1');
+} else {
+    define('MANAGER_SOCKET_FOLDER', '/run/systema/');
+    define('MANAGER_ADDRESS', 'manager.sock');
+}
 ?>
