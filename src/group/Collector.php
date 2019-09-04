@@ -61,7 +61,7 @@ class Collector
                 }
                 break;
             case "string":
-                if (isset($this->names[ $identifier ] && isset($this->things[ ($this->names[ $identifier ]) ]))) {
+                if (isset($this->names[ $identifier ]) && isset($this->things[ ($this->names[ $identifier ]) ])) {
                     unset($this->things[ ($this->names[ $identifier ]) ]);
                     unset($this->names[ $identifier ]);
                 } else {

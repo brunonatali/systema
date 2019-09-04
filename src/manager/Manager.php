@@ -47,25 +47,26 @@ class Manager extends Collector
 
         $server = new React\Socket\Server('unix://' . MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS, $loop);
 
-        $server->on('connection', function (ConnectionInterface $client) use ($this) {
+        $that = &$this;
+        $server->on('connection', function (ConnectionInterface $client) use ($that) {
             $remoteAddress = $client->getRemoteAddress();
 
-            if (($thingId = $this->searchByRemoteAddress($remoteAddress)) !== 0) {
-                $this->disconnectModule($client, $thingId);
+            if (($thingId = $that->searchByRemoteAddress($remoteAddress)) !== 0) {
+                $that->disconnectModule($client, $thingId);
             } else {
                 $thingId = addThing();
-                $this->things[ $thingId ]['thing']->changeAddress( $remoteAddress );
-                $this->things[ $thingId ]['thing']->addConnection( $client );
+                $that->things[ $thingId ]['thing']->changeAddress( $remoteAddress );
+                $that->things[ $thingId ]['thing']->addConnection( $client );
 
                 $client->on('data', function ($data) use ($client, $thingId) {
-                    $this->processData($client, $thingId, $data);
+                    $that->processData($client, $thingId, $data);
                 });
             }
         });
 
-        $server->on('error', function (ConnectionInterface $client) use ($this) {
-            if (($thingId = $this->searchByRemoteAddress($client->getRemoteAddress())) !== 0) {
-                $this->disconnectModule($client, $thingId);
+        $server->on('error', function (ConnectionInterface $client) use ($that) {
+            if (($thingId = $that->searchByRemoteAddress($client->getRemoteAddress())) !== 0) {
+                $that->disconnectModule($client, $thingId);
             }
         });
     }
@@ -91,7 +92,7 @@ class Manager extends Collector
         $tempData = $data;
         $msgResultId = $this->formatter->decode($tempData);
         if ($msgResultId === 0) {   // Data for manager
-            $dataProcess = $this->processRequest($connection, $tempData, $id)
+            $dataProcess = $this->processRequest($connection, $tempData, $id);
 
             if ($dataProcess === false) {
                 $data = json_encode([
@@ -117,7 +118,7 @@ class Manager extends Collector
                     'error' => CONNECTION_NOT_AUTHENTICATED
                 ]);
                 if ($this->formatter->encode($data, $id) === 0) $this->disconnectModule($connection, $id, $data);
-                else $this->disconnectModule($connection, $id)
+                else $this->disconnectModule($connection, $id);
             }
         } else {
             $data = json_encode([
