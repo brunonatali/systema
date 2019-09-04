@@ -28,9 +28,12 @@ namespace BrunoNatali\SysTema\Managers;
 use BrunoNatali\SysTema\Defines\GeneralDefines;
 use BrunoNatali\SysTema\Misc\Formatter;
 use BrunoNatali\SysTema\Group\Collector;
+use React\EventLoop\Factory as LoopFactory;
 use React\EventLoop\LoopInterface;
 use React\Socket\ConnectionInterface;
-use React\Socket\Server;
+use React\Socket\UnixServer as UnixReactor;
+
+include_once("ManagerDefines.php");
 
 class Manager extends Collector
 {
@@ -41,34 +44,50 @@ class Manager extends Collector
 
     Private $server;
 
-    function __construct(LoopInterface $loop)
+    function __construct(LoopInterface $loop = null)
     {
         $this->formatter = new Formatter($this->name, $this->id);
 
-        $server = new React\Socket\Server('unix://' . MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS, $loop);
+        if (null === $loop) {
+            $loop = LoopFactory::create();
+        }
 
-        $that = &$this;
-        $server->on('connection', function (ConnectionInterface $client) use ($that) {
-            $remoteAddress = $client->getRemoteAddress();
+        if(!file_exists(MANAGER_SOCKET_FOLDER)) {
+            mkdir(MANAGER_SOCKET_FOLDER);
+        } else if(file_exists(MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS)) {
+            unlink(MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS);
+        }
 
-            if (($thingId = $that->searchByRemoteAddress($remoteAddress)) !== 0) {
-                $that->disconnectModule($client, $thingId);
-            } else {
-                $thingId = addThing();
-                $that->things[ $thingId ]['thing']->changeAddress( $remoteAddress );
-                $that->things[ $thingId ]['thing']->addConnection( $client );
+        try {
+            $server = new UnixReactor('unix://' . MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS, $loop);
 
-                $client->on('data', function ($data) use ($client, $thingId) {
-                    $that->processData($client, $thingId, $data);
-                });
-            }
-        });
+            $that = &$this;
+            $server->on('connection', function (ConnectionInterface $client) use ($that) {
+                $remoteAddress = $client->getRemoteAddress();
 
-        $server->on('error', function (ConnectionInterface $client) use ($that) {
-            if (($thingId = $that->searchByRemoteAddress($client->getRemoteAddress())) !== 0) {
-                $that->disconnectModule($client, $thingId);
-            }
-        });
+                if (($thingId = $that->searchByRemoteAddress($remoteAddress)) !== 0) {
+                    $that->disconnectModule($client, $thingId);
+                } else {
+                    $thingId = addThing();
+                    $that->things[ $thingId ]['thing']->changeAddress( $remoteAddress );
+                    $that->things[ $thingId ]['thing']->addConnection( $client );
+
+                    $client->on('data', function ($data) use ($client, $thingId) {
+                        $that->processData($client, $thingId, $data);
+                    });
+                }
+            });
+
+            $server->on('error', function (ConnectionInterface $client) use ($that) {
+                if (($thingId = $that->searchByRemoteAddress($client->getRemoteAddress())) !== 0) {
+                    $that->disconnectModule($client, $thingId);
+                }
+            });
+
+            $this->instantiated = true;
+        } catch (Exception $e) {
+            //echo "$e"; Add some exceptions handling
+        }
     }
 
     Private function searchByRemoteAddress($remoteAddress)

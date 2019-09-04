@@ -29,11 +29,12 @@ use BrunoNatali\SysTema\Things\Thing;
 
 class Collector
 {
-    private $things = [0];
-    private $names = [0];
+    Protected $things = [0];
+    Protected $names = [0];
 
+    Protected $instantiated = false;
 
-    Public function addThing(string $name = null, $handled = false): int
+    Private function addThing(string $name = null, $handled = false): int
     {
         $thingsIndex = count($this->things);
 
@@ -48,7 +49,7 @@ class Collector
         return $thingsIndex;
     }
 
-    Public function removeThing($identifier)
+    Private function removeThing($identifier)
     {
         switch(gettype($identifier)){
             case "integer":
@@ -74,6 +75,10 @@ class Collector
         }
     }
 
+    Public function isInstantiated()
+    {
+        return $this->instantiated;
+    }
 }
 
 ?>
