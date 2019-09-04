@@ -41,7 +41,7 @@ class Manager extends Collector
     Private $id = MANAGER_ID;
 
     Private $formatter;
-
+    Private $loop;
     Private $server;
 
     function __construct(LoopInterface $loop = null)
@@ -49,7 +49,9 @@ class Manager extends Collector
         $this->formatter = new Formatter($this->name, $this->id);
 
         if (null === $loop) {
-            $loop = LoopFactory::create();
+            $this->loop = LoopFactory::create();
+        } else {
+            $this->loop = &$loop;
         }
 
         if(!file_exists(MANAGER_SOCKET_FOLDER)) {
@@ -59,7 +61,7 @@ class Manager extends Collector
         }
 
         try {
-            $server = new UnixReactor('unix://' . MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS, $loop);
+            $server = new UnixReactor('unix://' . MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS, $this->loop);
 
             $that = &$this;
             $server->on('connection', function (ConnectionInterface $client) use ($that) {
@@ -172,6 +174,19 @@ class Manager extends Collector
         }
 
         return false;
+    }
+
+    /**
+     * Run the application by entering the event loop
+     * @throws \RuntimeException If a loop was not previously specified
+     */
+    Public function run() {
+        if (null === $this->loop) {
+            throw new \RuntimeException("A React Loop was not provided during instantiation");
+        }
+        // @codeCoverageIgnoreStart
+        $this->loop->run();
+        // @codeCoverageIgnoreEnd
     }
 }
 

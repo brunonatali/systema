@@ -7,8 +7,10 @@ require __DIR__ . '/../../../../autoload.php';
 $theManager = new Manager();
 
 if ($theManager->isInstantiated()) {
-    //$theManager->run();
+    $theManager->run();
+
+    echo "System started" . PHP_EOL;
 } else {
-    // Do something to correct
+    // Do something to fix
 }
 ?>
