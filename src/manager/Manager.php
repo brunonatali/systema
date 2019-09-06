@@ -27,6 +27,7 @@ namespace BrunoNatali\SysTema\Managers;
 
 use BrunoNatali\SysTema\Defines\GeneralDefines;
 use BrunoNatali\SysTema\Misc\Formatter;
+use BrunoNatali\SysTema\Misc\SystemInteraction;
 use BrunoNatali\SysTema\Group\Collector;
 use React\EventLoop\Factory as LoopFactory;
 use React\EventLoop\LoopInterface;
@@ -35,16 +36,14 @@ use React\Socket\UnixServer as UnixReactor;
 
 class Manager extends Collector implements ManagerDefinesInterface
 {
-    Private $name = self::MANAGER_NAME;
-    Private $id = self::MANAGER_ID;
-
     Private $formatter;
     Private $loop;
     Private $server;
+    Private $system;
 
     function __construct(LoopInterface $loop = null)
     {
-        $this->formatter = new Formatter($this->name, $this->id);
+        $this->formatter = new Formatter(self::MANAGER_NAME, self::MANAGER_ID);
 
         if (null === $loop) {
             $this->loop = LoopFactory::create();
@@ -52,14 +51,14 @@ class Manager extends Collector implements ManagerDefinesInterface
             $this->loop = &$loop;
         }
 
-        if(!file_exists(self::MANAGER_SOCKET_FOLDER)) {
-            mkdir(self::MANAGER_SOCKET_FOLDER);
-        } else if(file_exists(self::MANAGER_SOCKET_FOLDER . self::MANAGER_ADDRESS)) {
-            unlink(self::MANAGER_SOCKET_FOLDER . self::MANAGER_ADDRESS);
+        if(!file_exists(self::SYSTEM_RUN_FOLDER[0])) {
+            mkdir(self::SYSTEM_RUN_FOLDER[0]);
+        } else if(file_exists(self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_ADDRESS)) {
+            unlink(self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_ADDRESS);
         }
 
         try {
-            $server = new UnixReactor('unix://' . self::MANAGER_SOCKET_FOLDER . self::MANAGER_ADDRESS, $this->loop);
+            $server = new UnixReactor('unix://' . self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_ADDRESS, $this->loop);
 
             $that = &$this;
             $server->on('connection', function (ConnectionInterface $client) use ($that) {
@@ -84,6 +83,8 @@ class Manager extends Collector implements ManagerDefinesInterface
                 }
             });
 
+            $this->system = new SystemInteraction();
+            $this->system->setAppInitiated(self::MANAGER_NAME);
             $this->instantiated = true;
         } catch (Exception $e) {
             //echo "$e"; Add some exceptions handling

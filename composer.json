@@ -17,7 +17,8 @@
 				"BrunoNatali\\SysTema\\Telemetry\\": "src/telemetry",
 			"BrunoNatali\\SysTema\\Misc\\": "src/misc",
 			"BrunoNatali\\SysTema\\Group\\": "src/group",
-			"BrunoNatali\\SysTema\\Things\\": "src/things"
+			"BrunoNatali\\SysTema\\Things\\": "src/things",
+			"BrunoNatali\\SysTema\\Xkg\\": "src/xkg"
 		}
 	}
 }

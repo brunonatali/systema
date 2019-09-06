@@ -23,16 +23,15 @@
  *  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace BrunoNatali\SysTema\Managers;
+namespace BrunoNatali\SysTema\Xkg;
 
-use BrunoNatali\SysTema\Defines\GeneralDefinesInterface;
-
-interface ManagerDefinesInterface extends GeneralDefinesInterface
+interface XkgDefinesInterface extends ManagerDefinesInterface
 {
-    Const MANAGER_NAME = 'manager';
-    Const MANAGER_ID = 0;
-    Const MANAGER_ACCEPTED_REQUEST = ['ID' => 1];
+    Const XKG_NAME = 'xkg';
 
-    Const MANAGER_ADDRESS = 'manager.sock';
+    Const BORDER_ROUTER_PORTS = ['gmas'];
+    Const XKG_SERVER_PORTS = ['rawdata','mngt','control'];
+
+    Const XKG_SOCKET_FOLDER = self::MANAGER_SOCKET_FOLDER;
 }
 ?>

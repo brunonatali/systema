@@ -23,16 +23,27 @@
  *  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace BrunoNatali\SysTema\Managers;
+namespace BrunoNatali\SysTema\Defines;
 
-use BrunoNatali\SysTema\Defines\GeneralDefinesInterface;
 
-interface ManagerDefinesInterface extends GeneralDefinesInterface
+interface GeneralDefinesInterface
 {
-    Const MANAGER_NAME = 'manager';
-    Const MANAGER_ID = 0;
-    Const MANAGER_ACCEPTED_REQUEST = ['ID' => 1];
+    // This will only work under unix.
+    // Need to be implemented something like: if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
+    Const SYSTEM_TEMP_FOLDER = '/tmp/Desh/';
+    Const SYSTEM_RUN_FOLDER = ['/run/systema/', '/var/run/systema/'];
 
-    Const MANAGER_ADDRESS = 'manager.sock';
+    /**
+    *   HANDLE CONNECTION
+    */
+    Const CONNECTION_REFUSED = 0xFFFFFFF0;
+    Const CONNECTION_NOT_AUTHENTICATED = 0xFFFFFFF1;
+
+    /**
+    *   HANDLE COMMUNICATION
+    */
+    Const DESTINATION_MISMATCH = 0xFFFFFFF2;
+    Const WRONG_REQUEST = 0xFFFFFFF3;
+    Const ENCODED_DATA_ERROR = 0xFFFFFFF4;
 }
 ?>

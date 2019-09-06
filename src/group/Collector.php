@@ -26,8 +26,10 @@
 namespace BrunoNatali\SysTema\Group;
 
 use BrunoNatali\SysTema\Things\Thing;
+use BrunoNatali\SysTema\Misc\SystemInteraction;
+use BrunoNatali\SysTema\Managers\ManagerDefinesInterface;
 
-class Collector
+class Collector implements ManagerDefinesInterface
 {
     Protected $things = [0];
     Protected $names = [0];
@@ -78,6 +80,14 @@ class Collector
     Public function isInstantiated()
     {
         return $this->instantiated;
+    }
+
+    Public function isManagerRunning(): bool
+    {
+        if(!file_exists(self::SYSTEM_RUN_FOLDER[0]) ||
+        !file_exists(self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_ADDRESS))
+            return false;
+        return true;
     }
 }
 

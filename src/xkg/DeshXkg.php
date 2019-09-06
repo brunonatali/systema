@@ -23,12 +23,40 @@
  *  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace BrunoNatali\SysTema\Defines;
+namespace BrunoNatali\SysTema\Xkg;
 
-define('CONNECTION_REFUSED', 0xFFFFFFF0);
-define('CONNECTION_NOT_AUTHENTICATED', 0xFFFFFFF1);
+use BrunoNatali\SysTema\Defines\GeneralDefines;
+use BrunoNatali\SysTema\Misc\Formatter;
+use BrunoNatali\SysTema\Group\Collector;
+use React\EventLoop\Factory as LoopFactory;
+use React\EventLoop\LoopInterface;
+use React\Socket\ConnectionInterface;
+use React\Socket\UnixServer as UnixReactor;
 
-define('DESTINATION_MISMATCH', 0xFFFFFFF2);
-define('WRONG_REQUEST', 0xFFFFFFF3);
-define('ENCODED_DATA_ERROR', 0xFFFFFFF4);
-?>
+class DeshXkg extends Collector implements XkgDefinesInterface
+{
+    Private $formatter;
+    Private $loop;
+    Private $server;
+
+    function __construct(LoopInterface $loop = null)
+    {
+        $this->formatter = new Formatter(self::XKG_NAME, self::MANAGER_ID);
+
+        if (null === $loop) {
+            $this->loop = LoopFactory::create();
+        } else {
+            $this->loop = &$loop;
+        }
+
+        if(!file_exists(self::MANAGER_SOCKET_FOLDER)) {
+            mkdir(self::MANAGER_SOCKET_FOLDER);
+        } else if(file_exists(self::MANAGER_SOCKET_FOLDER . self::MANAGER_ADDRESS)) {
+            unlink(self::MANAGER_SOCKET_FOLDER . self::MANAGER_ADDRESS);
+        }
+
+    }
+
+    Private function
+
+}
