@@ -23,15 +23,9 @@
  *  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace BrunoNatali\SysTema\Xkg;
+namespace BrunoNatali\SysTema\Things;
 
-interface XkgDefinesInterface extends ManagerDefinesInterface
-{
-    Const XKG_NAME = 'xkg';
+use BrunoNatali\SysTema\Managers\ManagerDefines;
 
-    Const BORDER_ROUTER_PORTS = ['gmas'];
-    Const XKG_SERVER_PORTS = ['rawdata','mngt','control'];
 
-    Const XKG_ADDRESS = 'xkg.sock';
-}
 ?>

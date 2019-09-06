@@ -44,6 +44,7 @@ class Manager extends Collector implements ManagerDefinesInterface
     function __construct(LoopInterface $loop = null)
     {
         $this->formatter = new Formatter(self::MANAGER_NAME, self::MANAGER_ID);
+        $this->system = new SystemInteraction();
 
         if (null === $loop) {
             $this->loop = LoopFactory::create();
@@ -83,7 +84,6 @@ class Manager extends Collector implements ManagerDefinesInterface
                 }
             });
 
-            $this->system = new SystemInteraction();
             $this->system->setAppInitiated(self::MANAGER_NAME);
             $this->instantiated = true;
         } catch (Exception $e) {
@@ -179,13 +179,13 @@ class Manager extends Collector implements ManagerDefinesInterface
      * Run the application by entering the event loop
      * @throws \RuntimeException If a loop was not previously specified
      */
-    Public function run() {
+    Public function run()
+    {
         if (null === $this->loop) {
             throw new \RuntimeException("A React Loop was not provided during instantiation");
         }
-        // @codeCoverageIgnoreStart
+
         $this->loop->run();
-        // @codeCoverageIgnoreEnd
     }
 }
 

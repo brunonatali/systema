@@ -85,7 +85,7 @@ class Collector implements ManagerDefinesInterface
     Public function isManagerRunning(): bool
     {
         if(!file_exists(self::SYSTEM_RUN_FOLDER[0]) ||
-        !file_exists(self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_ADDRESS))
+        !file_exists(self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_NAME . '.pid'))
             return false;
         return true;
     }
