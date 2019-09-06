@@ -25,15 +25,15 @@
 
 namespace BrunoNatali\SysTema\Managers;
 
-define('MANAGER_NAME', 'manager');
-define('MANAGER_ID', 0);
-define('MANAGER_ACCEPTED_REQUEST', ['ID' => 1]);
+interface
+{
+    Const MANAGER_NAME = 'manager';
+    Const MANAGER_ID = 0;
+    Const MANAGER_ACCEPTED_REQUEST = ['ID' => 1];
 
-if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-    //Handle windows, windows not accept unix sockets
-    //define('MANAGER_ADDRESS', '127.0.0.1');
-} else {
-    define('MANAGER_SOCKET_FOLDER', '/run/systema/');
-    define('MANAGER_ADDRESS', 'manager.sock');
+    // This will only work under unix.
+    // Need to be implemented something like: if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
+    Const MANAGER_SOCKET_FOLDER = '/run/systema/';
+    Const MANAGER_ADDRESS = 'manager.sock';
 }
 ?>

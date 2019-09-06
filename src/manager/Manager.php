@@ -33,12 +33,10 @@ use React\EventLoop\LoopInterface;
 use React\Socket\ConnectionInterface;
 use React\Socket\UnixServer as UnixReactor;
 
-include_once("ManagerDefines.php");
-
-class Manager extends Collector
+class Manager extends Collector implements ManagerDefinesInterface
 {
-    Private $name = MANAGER_NAME;
-    Private $id = MANAGER_ID;
+    Private $name = ManagerDefinesInterface::MANAGER_NAME;
+    Private $id = ManagerDefinesInterface::MANAGER_ID;
 
     Private $formatter;
     Private $loop;
@@ -54,14 +52,14 @@ class Manager extends Collector
             $this->loop = &$loop;
         }
 
-        if(!file_exists(MANAGER_SOCKET_FOLDER)) {
-            mkdir(MANAGER_SOCKET_FOLDER);
-        } else if(file_exists(MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS)) {
-            unlink(MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS);
+        if(!file_exists(ManagerDefinesInterface::MANAGER_SOCKET_FOLDER)) {
+            mkdir(ManagerDefinesInterface::MANAGER_SOCKET_FOLDER);
+        } else if(file_exists(ManagerDefinesInterface::MANAGER_SOCKET_FOLDER . ManagerDefinesInterface::MANAGER_ADDRESS)) {
+            unlink(ManagerDefinesInterface::MANAGER_SOCKET_FOLDER . ManagerDefinesInterface::MANAGER_ADDRESS);
         }
 
         try {
-            $server = new UnixReactor('unix://' . MANAGER_SOCKET_FOLDER . MANAGER_ADDRESS, $this->loop);
+            $server = new UnixReactor('unix://' . ManagerDefinesInterface::MANAGER_SOCKET_FOLDER . ManagerDefinesInterface::MANAGER_ADDRESS, $this->loop);
 
             $that = &$this;
             $server->on('connection', function (ConnectionInterface $client) use ($that) {
