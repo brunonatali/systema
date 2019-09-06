@@ -25,7 +25,7 @@
 
 namespace BrunoNatali\SysTema\Managers;
 
-interface
+interface ManagerDefinesInterface
 {
     Const MANAGER_NAME = 'manager';
     Const MANAGER_ID = 0;

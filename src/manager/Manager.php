@@ -35,8 +35,8 @@ use React\Socket\UnixServer as UnixReactor;
 
 class Manager extends Collector implements ManagerDefinesInterface
 {
-    Private $name = ManagerDefinesInterface::MANAGER_NAME;
-    Private $id = ManagerDefinesInterface::MANAGER_ID;
+    Private $name = self::MANAGER_NAME;
+    Private $id = self::MANAGER_ID;
 
     Private $formatter;
     Private $loop;
@@ -52,14 +52,14 @@ class Manager extends Collector implements ManagerDefinesInterface
             $this->loop = &$loop;
         }
 
-        if(!file_exists(ManagerDefinesInterface::MANAGER_SOCKET_FOLDER)) {
-            mkdir(ManagerDefinesInterface::MANAGER_SOCKET_FOLDER);
-        } else if(file_exists(ManagerDefinesInterface::MANAGER_SOCKET_FOLDER . ManagerDefinesInterface::MANAGER_ADDRESS)) {
-            unlink(ManagerDefinesInterface::MANAGER_SOCKET_FOLDER . ManagerDefinesInterface::MANAGER_ADDRESS);
+        if(!file_exists(self::MANAGER_SOCKET_FOLDER)) {
+            mkdir(self::MANAGER_SOCKET_FOLDER);
+        } else if(file_exists(self::MANAGER_SOCKET_FOLDER . self::MANAGER_ADDRESS)) {
+            unlink(self::MANAGER_SOCKET_FOLDER . self::MANAGER_ADDRESS);
         }
 
         try {
-            $server = new UnixReactor('unix://' . ManagerDefinesInterface::MANAGER_SOCKET_FOLDER . ManagerDefinesInterface::MANAGER_ADDRESS, $this->loop);
+            $server = new UnixReactor('unix://' . self::MANAGER_SOCKET_FOLDER . self::MANAGER_ADDRESS, $this->loop);
 
             $that = &$this;
             $server->on('connection', function (ConnectionInterface $client) use ($that) {
