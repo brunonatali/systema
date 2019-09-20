@@ -3,8 +3,10 @@
     "description": "PHP modularity I/O system 4 communication.",
     "license": "MIT",
     "require": {
-        "php": ">=7.3",
-		"react/react": "^1.0"
+			"php": ">=7.3",
+			"brunonatali/socket": "^1.0",
+			"brunonatali/stream": "^1.0",
+			"brunonatali/event-loop": "^1.0"
 	},
 	"require-dev": {
 		"clue/block-react": "^1.2",
@@ -13,8 +15,8 @@
 	"autoload": {
 		"psr-4": {
 			"BrunoNatali\\SysTema\\Defines\\": "src/defines",
-				"BrunoNatali\\SysTema\\Managers\\": "src/manager",
-				"BrunoNatali\\SysTema\\Telemetry\\": "src/telemetry",
+			"BrunoNatali\\SysTema\\Managers\\": "src/manager",
+			"BrunoNatali\\SysTema\\Telemetry\\": "src/telemetry",
 			"BrunoNatali\\SysTema\\Misc\\": "src/misc",
 			"BrunoNatali\\SysTema\\Group\\": "src/group",
 			"BrunoNatali\\SysTema\\Things\\": "src/things",

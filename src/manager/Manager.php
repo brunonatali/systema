@@ -29,10 +29,10 @@ use BrunoNatali\SysTema\Defines\GeneralDefines;
 use BrunoNatali\SysTema\Misc\Formatter;
 use BrunoNatali\SysTema\Misc\SystemInteraction;
 use BrunoNatali\SysTema\Group\Collector;
-use React\EventLoop\Factory as LoopFactory;
-use React\EventLoop\LoopInterface;
-use React\Socket\ConnectionInterface;
-use React\Socket\UnixServer as UnixReactor;
+use BrunoNatali\EventLoop\Factory as LoopFactory;
+use BrunoNatali\EventLoop\LoopInterface;
+use BrunoNatali\Socket\ConnectionInterface;
+use BrunoNatali\Socket\UnixServer as UnixReactor;
 
 class Manager extends Collector implements ManagerDefinesInterface
 {

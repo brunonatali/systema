@@ -26,8 +26,8 @@
 namespace BrunoNatali\SysTema\Things;
 
 use BrunoNatali\SysTema\Things\ModulesDefines;
-use React\EventLoop\LoopInterface;
-use React\Socket\Connector;
+use BrunoNatali\EventLoop\LoopInterface;
+use BrunoNatali\Socket\Connector;
 
 class Module extends Thing
 {

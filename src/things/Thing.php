@@ -26,7 +26,7 @@
 namespace BrunoNatali\SysTema\Things;
 
 use BrunoNatali\SysTema\Misc\Formatter;
-use React\Socket\ConnectionInterface;
+use BrunoNatali\Socket\ConnectionInterface;
 
 class Thing
 {

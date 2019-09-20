@@ -25,7 +25,7 @@
 
 namespace BrunoNatali\SysTema\Xkg;
 
-interface XkgDefinesInterface extends ManagerDefinesInterface
+interface XkgDefinesInterface
 {
     Const XKG_NAME = 'xkg';
 

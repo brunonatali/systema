@@ -26,12 +26,13 @@
 namespace BrunoNatali\SysTema\Xkg;
 
 use BrunoNatali\SysTema\Defines\GeneralDefines;
+use BrunoNatali\SysTema\Misc\SystemInteraction;
 use BrunoNatali\SysTema\Misc\Formatter;
 use BrunoNatali\SysTema\Group\Collector;
-use React\EventLoop\Factory as LoopFactory;
-use React\EventLoop\LoopInterface;
-use React\Socket\ConnectionInterface;
-use React\Socket\UnixConnector as UnixReactor;
+use BrunoNatali\EventLoop\Factory as LoopFactory;
+use BrunoNatali\EventLoop\LoopInterface;
+use BrunoNatali\Socket\ConnectionInterface;
+use BrunoNatali\Socket\UnixConnector as UnixReactor;
 
 class DeshXkg extends Collector implements XkgDefinesInterface
 {
@@ -57,22 +58,22 @@ class DeshXkg extends Collector implements XkgDefinesInterface
 
     Private function instantiate()
     {
+        $that = &$this;
         if (!$this->isManagerRunning()) {
-            $that = &$this;
-            $loop->addTimer(1, function () use ($that){
+            $this->loop->addTimer(1, function () use ($that){
                 $that->instantiate();
             });
         }
 
         foreach (self::XKG_SERVER_PORTS as $xkgPort) {
             if(file_exists(self::SYSTEM_TEMP_FOLDER . $xkgPort))  unlink(self::SYSTEM_TEMP_FOLDER . $xkgPort);
-
-            $this->server[$xkgPort] = new UnixReactor($loop);
+echo "criando $xkgPort" . PHP_EOL;
+            $this->server[$xkgPort] = new UnixReactor($this->loop);
 
             $this->server[$xkgPort]
                 ->connect('unix://' . self::SYSTEM_TEMP_FOLDER . $xkgPort, "dgram")
-                ->then(function (React\Socket\ConnectionInterface $connection) use ($xkgPort, &$loop) {
-        			$connection->on('data', function ($data) use ($xkgPort, &$loop) {
+                ->then(function (React\Socket\ConnectionInterface $connection) use ($xkgPort, $that) {
+        			$connection->on('data', function ($data) use ($xkgPort, $that) {
                         echo "Data received in ($xkgPort) ";
                         var_dump($data);
         			});
@@ -82,6 +83,7 @@ class DeshXkg extends Collector implements XkgDefinesInterface
 
         $this->system->setAppInitiated(self::XKG_NAME);
         $this->instantiated = true;
+        echo "iniciado" . PHP_EOL;
     }
 
     /**
@@ -93,7 +95,7 @@ class DeshXkg extends Collector implements XkgDefinesInterface
         if (null === $this->loop) {
             throw new \RuntimeException("A React Loop was not provided during instantiation");
         }
-
+        echo "rodando" . PHP_EOL;
         $this->loop->run();
     }
 
