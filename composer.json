@@ -22,5 +22,7 @@
 			"BrunoNatali\\SysTema\\Things\\": "src/things",
 			"BrunoNatali\\SysTema\\Xkg\\": "src/xkg"
 		}
-	}
+	},
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
