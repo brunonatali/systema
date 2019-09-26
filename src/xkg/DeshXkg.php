@@ -27,7 +27,7 @@ namespace BrunoNatali\SysTema\Xkg;
 
 use BrunoNatali\SysTema\Defines\GeneralDefines;
 use BrunoNatali\SysTema\Misc\SystemInteraction;
-use BrunoNatali\SysTema\Misc\Formatter;
+use BrunoNatali\SysTema\Misc\HandleManagerForClients as HandleManager;
 use BrunoNatali\SysTema\Group\Collector;
 use BrunoNatali\EventLoop\Factory as LoopFactory;
 use BrunoNatali\EventLoop\LoopInterface;
@@ -36,15 +36,14 @@ use BrunoNatali\Socket\UnixConnector as UnixReactor;
 
 class DeshXkg extends Collector implements XkgDefinesInterface
 {
-    Private $formatter;
     Private $loop;
     Private $system;
+    Private $manager;
 
-    Private $server = [];
+    Private $status = self::XKG_STATUS['stoped'];
 
     function __construct(LoopInterface $loop = null)
     {
-        $this->formatter = new Formatter(self::XKG_NAME, self::MANAGER_ID);
         $this->system = new SystemInteraction();
 
         if (null === $loop) {
@@ -53,6 +52,7 @@ class DeshXkg extends Collector implements XkgDefinesInterface
             $this->loop = &$loop;
         }
 
+        $this->status = self::XKG_STATUS['started'];
         $this->instantiate();
     }
 
@@ -63,7 +63,13 @@ class DeshXkg extends Collector implements XkgDefinesInterface
             $this->loop->addTimer(1, function () use ($that){
                 $that->instantiate();
             });
+            $this->status = self::XKG_STATUS['waitManager'];
+            return;
         }
+
+        $this->status = self::XKG_STATUS['building'];
+        $this->manager = new HandleManager($this->loop, self::XKG_NAME, self::MANAGER_ID, true);
+
 
         foreach (self::XKG_SERVER_PORTS as $xkgPort) {
             if(file_exists(self::SYSTEM_TEMP_FOLDER . $xkgPort))  unlink(self::SYSTEM_TEMP_FOLDER . $xkgPort);
@@ -72,9 +78,10 @@ echo "criando $xkgPort" . PHP_EOL;
 
             $this->server[$xkgPort]
                 ->connect('unix://' . self::SYSTEM_TEMP_FOLDER . $xkgPort, "dgram")
-                ->then(function (React\Socket\ConnectionInterface $connection) use ($xkgPort, $that) {
+                ->then(function (BrunoNatali\Socket\ConnectionInterface $connection) use ($xkgPort, $that) {
+echo "Conectado $xkgPort" . PHP_EOL;
         			$connection->on('data', function ($data) use ($xkgPort, $that) {
-                        echo "Data received in ($xkgPort) ";
+echo "Data received in ($xkgPort) ";
                         var_dump($data);
         			});
         		}

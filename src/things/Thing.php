@@ -30,9 +30,9 @@ use BrunoNatali\Socket\ConnectionInterface;
 
 class Thing
 {
-    private $name;
-    private $id;
-    Private $address = null;
+    Protected $name;
+    Protected $id;
+    Protected $address = null;
     Private $connection = null;
 
     Public $formatter;
@@ -47,19 +47,24 @@ class Thing
         $this->formatter = new Formatter($name, $id);
     }
 
-    Private function changeName($name)
+    Public function changeName($name)
     {
         $this->name = $name;
     }
 
-    Private function changeAddress($address)
+    Public function changeAddress($address)
     {
         $this->address = $address;
     }
 
-    Private function addConnection(ConnectionInterface &$conn)
+    Public function addConnection(ConnectionInterface &$conn)
     {
         $this->connection = &$conn;
+    }
+
+    Public function getAddress()
+    {
+        return $this->address;
     }
 }
 

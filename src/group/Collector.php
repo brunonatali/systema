@@ -36,7 +36,7 @@ class Collector implements ManagerDefinesInterface
 
     Protected $instantiated = false;
 
-    Private function addThing(string $name = null, $handled = false): int
+    Protected function addThing(string $name = null, $handled = false): int
     {
         $thingsIndex = count($this->things);
 
@@ -51,7 +51,7 @@ class Collector implements ManagerDefinesInterface
         return $thingsIndex;
     }
 
-    Private function removeThing($identifier)
+    Protected function removeThing($identifier)
     {
         switch(gettype($identifier)){
             case "integer":

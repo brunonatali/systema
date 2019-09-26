@@ -68,12 +68,13 @@ class Manager extends Collector implements ManagerDefinesInterface
                 if (($thingId = $that->searchByRemoteAddress($remoteAddress)) !== 0) {
                     $that->disconnectModule($client, $thingId);
                 } else {
-                    $thingId = addThing();
+                    $thingId = $that->addThing((string)$remoteAddress);
                     $that->things[ $thingId ]['thing']->changeAddress( $remoteAddress );
                     $that->things[ $thingId ]['thing']->addConnection( $client );
 
-                    $client->on('data', function ($data) use ($client, $thingId) {
+                    $client->on('data', function ($data) use ($client, $thingId, $that) {
                         $that->processData($client, $thingId, $data);
+                        var_dump($thingId, $data);
                     });
                 }
             });
@@ -93,8 +94,9 @@ class Manager extends Collector implements ManagerDefinesInterface
 
     Private function searchByRemoteAddress($remoteAddress)
     {
-        foreach ($this->things as $the) {
-            if ($remoteAddress == $the['thing']->address) return $key;
+        foreach ($this->things as $key => $the) {
+            if ($key == 0 && $the == 0) continue;
+            if ($remoteAddress == $the['thing']->getAddress()) return $key;
         }
         return 0;
     }
@@ -110,16 +112,16 @@ class Manager extends Collector implements ManagerDefinesInterface
     Private function processData(ConnectionInterface &$connection, $id, $data)
     {
         $tempData = $data;
-        $msgResultId = $this->formatter->decode($tempData);
+        $msgResultId = $this->formatter->decode($tempData, $decCounter);
         if ($msgResultId === 0) {   // Data for manager
-            $dataProcess = $this->processRequest($connection, $tempData, $id);
+            $dataProcess = $this->processRequest($connection, $tempData, $id, $decCounter);
 
             if ($dataProcess === false) {
                 $data = json_encode([
                     'response' => false,
-                    'error' => WRONG_REQUEST
+                    'error' => self::WRONG_REQUEST
                 ]);
-                if ($this->formatter->encode($data, $id) === 0) $connection->write($data);
+                if ($this->formatter->encode($data, $id, $decCounter) === 0) $connection->write($data);
             }
         } else if ($msgResultId) { // Data for others
             if ($this->things[ $thingId ]['handled']) { // Check if is "authenticated", if is redy to communicate with others
@@ -128,28 +130,28 @@ class Manager extends Collector implements ManagerDefinesInterface
                 } else {
                     $data = json_encode([
                         'response' => false,
-                        'error' => DESTINATION_MISMATCH
+                        'error' => self::DESTINATION_MISMATCH
                     ]);
-                    if ($this->formatter->encode($data, $id) === 0) $connection->write($data);
+                    if ($this->formatter->encode($data, $id, $decCounter) === 0) $connection->write($data);
                 }
             } else {
                 $data = json_encode([
                     'response' => false,
-                    'error' => CONNECTION_NOT_AUTHENTICATED
+                    'error' => self::CONNECTION_NOT_AUTHENTICATED
                 ]);
-                if ($this->formatter->encode($data, $id) === 0) $this->disconnectModule($connection, $id, $data);
+                if ($this->formatter->encode($data, $id, $decCounter) === 0) $this->disconnectModule($connection, $id, $data);
                 else $this->disconnectModule($connection, $id);
             }
         } else {
             $data = json_encode([
                 'response' => false,
-                'error' => ENCODED_DATA_ERROR
+                'error' => self::ENCODED_DATA_ERROR
             ]);
-            if ($this->formatter->encode($data, $id) === 0) $connection->write($data);
+            if ($this->formatter->encode($data, $id, $decCounter) === 0) $connection->write($data);
         }
     }
 
-    Private function processRequest(ConnectionInterface &$connection, $data, $id = 0)
+    Private function processRequest(ConnectionInterface &$connection, $data, $id = 0, $decCounter = null)
     {
         if (($data = json_decode($data, true)) !== false) {
             if (!isset($data['request'])) return false;
@@ -161,7 +163,7 @@ class Manager extends Collector implements ManagerDefinesInterface
                             'response' => true,
                             'value' => $thingId
                         ]);
-                        if (($encodeResult = $this->formatter->encode($data, $id)) === 0) {
+                        if (($encodeResult = $this->formatter->encode($data, $id, $decCounter)) === 0) {
                             $connection->write($data);
                             return true;
                         } else {
