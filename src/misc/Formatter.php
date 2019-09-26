@@ -37,6 +37,9 @@ class Formatter
     Private $timeStampMicroTime = false;
     Private $timeStampLen = 0;
 
+    Private $counter = 0;
+    Private $counterLen = 4;
+
     Private $buffer = null;
 
     Private $idLenght = 4; // 65535
@@ -63,13 +66,14 @@ class Formatter
         $this->getPayload();
     }
 
-    Public function encode(string &$data, $destination): int
+    Public function encode(string &$data, $destination, &$counter = null): int
     {
         try {
             $this->checkInputId($destination);
 
-            // {header}{len}{source}{destination}{if time stamp}{data}
-            $data = $this->header . $this->getDataLenght($data) . $this->id . $this->getId($destination) . $this->getTimeStamp() . $data;
+            // {header}{len}{counter}{source}{destination}{if time stamp}{data}
+            $counter = $this->getCounter($counter);
+            $data = $this->header . $this->getDataLenght($data) . $counter . $this->id . $this->getId($destination) .  $this->getTimeStamp() . $data;
             return 0;
         } catch (InvalidArgumentException $e) {
             $this->lastErrorString = $e;
@@ -77,7 +81,7 @@ class Formatter
         }
     }
 
-    Public function decode(string &$data)
+    Public function decode(string &$data, &$counter = null)
     {
         //Check header
         if($this->header !== substr($data, 0, $this->headerLenght) && $this->buffer === null) {
@@ -91,6 +95,7 @@ class Formatter
 
         // Check data len
         if (strlen($data) == ($thisDataLen = hexdec(substr($data, $this->headerLenght, $this->dataLenght)))) {
+            $counter = substr($data, $this->easyStore->getValByName('counterStartLen'), $this->counterLen);
             // Check if package destination is this module
             if ($this->id != ($thisDataDestination = substr($data, $this->easyStore->getValByName('decodeDestinationStartLen'), $this->idLenght)))
                 return hexdec($thisDataDestination); // Not for him return destination decimal integer
@@ -121,6 +126,17 @@ class Formatter
         return ($this->timeStampMicroTime ? (string)microtime(true) : (string)time());
     }
 
+    Private function getCounter($counter = null)
+    {
+        if ($counter !== null && $counter < 10000) {
+            return str_pad((string)$counter, $this->counterLen, "0", STR_PAD_LEFT);
+        } else {
+            if ($this->counter == 9999) $this->counter = 0;
+            else $this->counter ++;
+            return str_pad((string)$this->counter, $this->counterLen, "0", STR_PAD_LEFT);
+        }
+    }
+
     Private function getId(string &$ID)
     {
         if(strlen($ID) > $this->idLenght) throw new InvalidArgumentException("getId() maximum ID lenght is " . $this->idLenght);
@@ -143,7 +159,7 @@ class Formatter
 
     Private function getDataLenght(string &$data): string
     {
-        // {data len}{header len + source id len + destination id len}{data len len}{if time stamp len}
+        // {data len}{header len + counter len + source id len + destination id len}{data len len}{if time stamp len}
         return str_pad(dechex((int)strlen($data) + $this->payload), $this->dataLenght, "0", STR_PAD_LEFT);
     }
 
@@ -161,8 +177,10 @@ class Formatter
 
     Private function getPayload()
     {
-        // {header len}{data len}{source id len}{destination id len}{if time stamp len}
-        $this->payload = $this->headerLenght + $this->dataLenght + ($this->idLenght * 2) + ($this->timeStampAdd ? $this->timeStampLen : 0);
+        // {header len}{data len}{counter}{source id len}{destination id len}{if time stamp len}
+        $this->payload = $this->headerLenght + $this->dataLenght + $this->counterLen + ($this->idLenght * 2) + ($this->timeStampAdd ? $this->timeStampLen : 0);
+        $this->easyStore->newVar('counterStartLen');
+        $this->easyStore->setValByName('counterStartLen', $this->headerLenght + $this->dataLenght);
         $this->easyStore->newVar('decodeDestinationStartLen');
         $this->easyStore->setValByName('decodeDestinationStartLen', $this->payload - $this->idLenght - ($this->timeStampAdd ? $this->timeStampLen : 0));
     }
