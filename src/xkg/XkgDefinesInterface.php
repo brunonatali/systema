@@ -33,5 +33,13 @@ interface XkgDefinesInterface
     Const XKG_SERVER_PORTS = ['rawdata','mngt','control'];
 
     Const XKG_ADDRESS = 'xkg.sock';
+
+    Const XKG_STATUS = [
+        'stoped' => 0x0,
+        'started' => 0x1,
+        'waitManager' => 0x2,
+        'building' => 0x03,
+        'redy' => 0x04
+    ];
 }
 ?>
