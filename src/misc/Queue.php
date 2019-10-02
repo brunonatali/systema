@@ -64,9 +64,8 @@ class Queue
         $toReturn = true;
         if (!isset($this->listById[$id])) return false;
 
-        if (is_callable($this->listById[$id]['onData'])) {
+        if (is_callable($this->listById[$id]['onData']))
             $toReturn = $this->listById[$id]['onData']($data, $params = $this->listById[$id]);
-        }
 
         $this->listRemove($id);
 
@@ -78,7 +77,7 @@ class Queue
         if (isset($this->listById[$id])) unset($this->listById[$id]);
     }
 
-    Public function push(mixed $value, number $id = null)
+    Public function push($value, number $id = null)
     {
         if ($id !== null) {
             try {
@@ -103,12 +102,13 @@ class Queue
         }
 
         $queueExecuteNode = $this->main->dequeue();
-        if (is_callable()) {
+        if (is_callable($queueExecuteNode)) {
             $this->running = true;
             $this->timer = $this->loop->addTimer(0.1, function () use ($queueExecuteNode){
                 $queueExecuteNode();
                 $this->running = false;
                 $this->timer = null;
+                $this->next();
             });
         }
         return true;
