@@ -68,7 +68,7 @@ class Manager extends Collector implements ManagerDefinesInterface
                 if (($thingId = $that->searchByRemoteAddress($remoteAddress)) !== 0) {
                     $that->disconnectModule($client, $thingId);
                 } else {
-                    $thingId = $that->addThing($that->loop, (string)$remoteAddress);
+                    $thingId = $that->addThing($that->loop, (string)$remoteAddress, true); // need to be implement auth, remove true
                     $that->things[ $thingId ]['thing']->changeAddress( $remoteAddress );
                     $that->things[ $thingId ]['thing']->addConnection( $client );
 
@@ -78,15 +78,12 @@ class Manager extends Collector implements ManagerDefinesInterface
                     });
 
                     $client->on('close', function () use ($that, $client, $thingId) {
-echo "Cliente $thingId closed" . PHP_EOL;
                         $that->disconnectModule($client, $thingId);
                     });
 
                     $client->on('error', function () use ($that, $client, $thingId) {
-echo "Cliente $thingId error socket" . PHP_EOL;
                         $that->disconnectModule($client, $thingId);
                     });
-echo "Done" . PHP_EOL;
                 }
             });
 
@@ -117,16 +114,19 @@ echo "Done" . PHP_EOL;
     Private function processData(ConnectionInterface &$connection, $id, $data)
     {
         $tempData = $data;
-        $msgResultId = $this->formatter->decode($tempData, $decCounter);
-        if ($msgResultId === 0) {   // Data for manager
-            $dataProcess = $this->processRequest($connection, $tempData, $id, $decCounter);
+
+        $msgResultId = $this->formatter->getDataDestinationId($data);
+        if ($msgResultId === self::MANAGER_ID) {   // Data for manager
+            $this->formatter->decode($tempData, $decCounter);
+            $modDestinationId = $this->formatter->getDataSourceId($data);
+            $dataProcess = $this->processRequest($connection, $tempData, $modDestinationId, $decCounter);
 
             if ($dataProcess === false) {
                 $data = json_encode([
                     'response' => false,
                     'error' => self::WRONG_REQUEST
                 ]);
-                if ($this->formatter->encode($data, $id, $decCounter) === 0) $connection->write($data);
+                if ($this->formatter->encode($data, $modDestinationId, $decCounter) === 0) $connection->write($data);
             }
         } else if ($msgResultId) { // Data for others
             if ($this->things[ $thingId ]['handled']) { // Check if is "authenticated", if is redy to communicate with others
@@ -168,14 +168,34 @@ echo "Done" . PHP_EOL;
                             'response' => true,
                             'value' => $thingId
                         ]);
-                        if (($encodeResult = $this->formatter->encode($data, $id, $decCounter)) === 0) {
-                            $connection->write($data);
-                            return true;
-                        } else {
-                            return $encodeResult;
-                        }
                     }
                     break;
+                case 'LIST_CLIENTS':
+                    $data = json_encode([
+                        'response' => true,
+                        'value' => $this->names
+                    ]);
+                    break;
+                case 'CHANGE_NAME':
+                    if (!isset($data['value']) || $data['value'] == "") {
+                        $data = json_encode([
+                            'response' => false,
+                            'value' => "New name not provided"
+                        ]);
+                    } else {
+                        $currentName = $this->getThingName($id);
+                        $data = json_encode([
+                            'response' => $this->changeThingName($currentName, $data['value'])
+                        ]);
+                    }
+                    break;
+            }
+
+            if (($encodeResult = $this->formatter->encode($data, $id, $decCounter)) === 0) {
+                $connection->write($data);
+                return true;
+            } else {
+                return $encodeResult;
             }
         }
 
