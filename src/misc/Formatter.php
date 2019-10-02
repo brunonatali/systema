@@ -113,16 +113,12 @@ echo "Formatter ID: $id".PHP_EOL;
 
     Public function getDataDestinationId(string &$data)
     {
-        if ($this->id != ($thisDataDestination = substr($data, $this->easyStore->getValByName('decodeDestinationStartLen'), $this->idLenght)))
-            return intval($thisDataDestination); // Not for him return destination decimal integer
-        return 0;
+        return intval(substr($data, $this->easyStore->getValByName('decodeDestinationStartLen'), $this->idLenght));
     }
 
     Public function getDataSourceId(string &$data)
     {
-        if ($this->id != ($thisDataSource = substr($data, $this->easyStore->getValByName('decodeSourceStartLen'), $this->idLenght)))
-            return intval($thisDataSource); // Not for him return destination decimal integer
-        return 0;
+        return intval(substr($data, $this->easyStore->getValByName('decodeSourceStartLen'), $this->idLenght));
     }
 
     Public function changeId($id)
