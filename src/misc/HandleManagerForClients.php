@@ -35,7 +35,7 @@ use BrunoNatali\SysTema\Misc\Formatter;
 class HandleManagerForClients implements ManagerDefinesInterface
 {
     Private $me;
-
+    Public $modules = [];
     Private $mainSocket;
     Private $resourceType = "stream";
     Private $connForceSocket = false; // Force system use socket instead stream lib
@@ -49,28 +49,62 @@ echo "Criando interface principal para $name - $this->id" . PHP_EOL;
         $this->connForceSocket = $connForceSocket;
         $this->mainSocket = new TheClient($loop);
 
+        $that = &$this;
+        $this->me->queue->push(function () use ($that, $name) {
+            $that->me->sendMessage(
+                ['request' => 'CHANGE_NAME', 'value' => $name],
+                self::MANAGER_ID,
+                function ($data, $params) use ($that) {
+                    $data = json_decode($data, true);
+                    if (isset($data['response']) && $data['response'])
+echo "Alterado nome da aplicacao" . PHP_EOL;
+                    return true;
+                }
+            );
+        });
+        $this->me->queue->push(function () use ($that, $name) {
+            $that->me->sendMessage(
+                ['request' => 'LIST_CLIENTS'],
+                self::MANAGER_ID,
+                function ($data, $params) use ($that) {
+                    $data = json_decode($data, true);
+                    if (isset($data['response']) && $data['response'])
+                        $that->modules = $data['value'];
+print_r($that->modules);
+                    return true;
+                }
+            );
+        });
+
 echo "Conectando ao manager : ";
         $this->mainSocket
             ->connect('unix://' . self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_ADDRESS, $this->resourceType, $this->connForceSocket)
-            ->then(function (ConnectionInterface $connection) {
-                $this->me->addConnection($connection);
+            ->then(function (ConnectionInterface $connection) use ($that) {
+                $that->me->addConnection($connection);
 echo "Conectado" . PHP_EOL;
-                $that = &$this;
-                $this->me->sendMessage(['request' => 'ID'], self::MANAGER_ID,
+                $that->me->sendMessage(
+                    ['request' => 'ID'],
+                    self::MANAGER_ID,
                     function ($data, $params) use ($that) {
+echo "Func proc data - $data" . PHP_EOL;
                         $data = json_decode($data, true);
-                        if (isset($data['response']) && $data['response'])
+                        if (isset($data['response']) && $data['response']) {
+echo "Change id" . PHP_EOL;
                             $that->me->changeId($data['value']);
+echo "QueueResume" . PHP_EOL;
+                            $that->me->queue->resume();
+                        }
                         return true;
                     }
                 );
 
-                $connection->on('data', function ($data) use ($counterEnc){
-                    $this->me->formatter->decode($data, $counterDec);
-                    if (!$this->me->queue->listProccess($counterDec, $data)) {
+                $connection->on('data', function ($data) use ($that) {
+                    var_dump($that->me->formatter->decode($data, $counterDec));
+                    if (!$that->me->queue->listProccess($counterDec, $data)) {
                         // If this data is not in the queue list
+echo "Data not in the list".PHP_EOL;
                     }
-                    var_dump($counterEnc, $counterDec, $data);
+                    var_dump($counterDec, $data);
                 });
         });
     }
