@@ -25,6 +25,8 @@
 
 namespace BrunoNatali\SysTema\Misc;
 
+use Exception;
+
 class Formatter
 {
     Private $name;
@@ -109,6 +111,12 @@ class Formatter
         }
     }
 
+    Public function changeId($id)
+    {
+        $this->checkInputId($id);
+        $this->id = $this->getId($id);
+    }
+
     Public function getLastError()
     {
         if ($this->lastErrorString) return $this->lastErrorString;
@@ -152,7 +160,7 @@ class Formatter
             case "string":
                 break;
             default:
-                throw new InvalidArgumentException('Destination must be HEX or integer');
+                throw new Exception('Destination must be HEX or integer');
                 break;
         }
     }
