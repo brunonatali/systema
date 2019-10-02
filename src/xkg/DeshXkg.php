@@ -68,7 +68,7 @@ class DeshXkg extends Collector implements XkgDefinesInterface
         }
 
         $this->status = self::XKG_STATUS['building'];
-        $this->manager = new HandleManager($this->loop, self::XKG_NAME, self::MANAGER_ID, true);
+        $this->manager = new HandleManager($this->loop, self::XKG_NAME, null, true);
 
 
         foreach (self::XKG_SERVER_PORTS as $xkgPort) {

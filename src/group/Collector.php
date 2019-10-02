@@ -28,6 +28,7 @@ namespace BrunoNatali\SysTema\Group;
 use BrunoNatali\SysTema\Things\Thing;
 use BrunoNatali\SysTema\Misc\SystemInteraction;
 use BrunoNatali\SysTema\Managers\ManagerDefinesInterface;
+use BrunoNatali\EventLoop\LoopInterface;
 
 class Collector implements ManagerDefinesInterface
 {
@@ -36,18 +37,19 @@ class Collector implements ManagerDefinesInterface
 
     Protected $instantiated = false;
 
-    Protected function addThing(string $name = null, $handled = false): int
+    Protected function addThing(LoopInterface &$loop, string $name = null, $handled = false): int
     {
         $thingsIndex = count($this->things);
-
+echo "Collector add thing ($name):";
         $this->things[ $thingsIndex ] = [
-            'thing' => new Thing($thingsIndex, $name),
+            'thing' => new Thing($loop, $thingsIndex, $name),
             'handled' => $handled
         ];
         if ($name !== null && !is_bool($name)) {
             if (isset($this->names[ $name ])) throw new InvalidArgumentException('Name ' . $name . ' exists.');
             $this->names[ $name ] = $thingsIndex;
         }
+echo "OK" . PHP_EOL;
         return $thingsIndex;
     }
 
@@ -56,7 +58,7 @@ class Collector implements ManagerDefinesInterface
         switch(gettype($identifier)){
             case "integer":
                 if (isset($this->things[ $identifier ])) {
-                    $thisName = $this->things[ $identifier ]->formatter->getName();
+                    $thisName = $this->things[ $identifier ]['thing']->formatter->getName();
                     if (isset($this->names[ $thisName ])) unset($this->names[ $thisName ]);
                     unset($this->things[ $identifier ]);
                 } else {

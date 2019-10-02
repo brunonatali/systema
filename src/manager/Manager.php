@@ -68,20 +68,25 @@ class Manager extends Collector implements ManagerDefinesInterface
                 if (($thingId = $that->searchByRemoteAddress($remoteAddress)) !== 0) {
                     $that->disconnectModule($client, $thingId);
                 } else {
-                    $thingId = $that->addThing((string)$remoteAddress);
+                    $thingId = $that->addThing($that->loop, (string)$remoteAddress);
                     $that->things[ $thingId ]['thing']->changeAddress( $remoteAddress );
                     $that->things[ $thingId ]['thing']->addConnection( $client );
 
-                    $client->on('data', function ($data) use ($client, $thingId, $that) {
+                    $client->on('data', function ($data) use ($that, $client, $thingId) {
                         $that->processData($client, $thingId, $data);
                         var_dump($thingId, $data);
                     });
-                }
-            });
 
-            $server->on('error', function (ConnectionInterface $client) use ($that) {
-                if (($thingId = $that->searchByRemoteAddress($client->getRemoteAddress())) !== 0) {
-                    $that->disconnectModule($client, $thingId);
+                    $client->on('close', function () use ($that, $client, $thingId) {
+echo "Cliente $thingId closed" . PHP_EOL;
+                        $that->disconnectModule($client, $thingId);
+                    });
+
+                    $client->on('error', function () use ($that, $client, $thingId) {
+echo "Cliente $thingId error socket" . PHP_EOL;
+                        $that->disconnectModule($client, $thingId);
+                    });
+echo "Done" . PHP_EOL;
                 }
             });
 
@@ -106,7 +111,7 @@ class Manager extends Collector implements ManagerDefinesInterface
         if ($id === 0) return;
         if ($data !== null) $connection->write($data);
         $connection->close();
-        removeThing($id);
+        $this->removeThing($id);
     }
 
     Private function processData(ConnectionInterface &$connection, $id, $data)

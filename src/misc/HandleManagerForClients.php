@@ -25,6 +25,7 @@
 
 namespace BrunoNatali\SysTema\Misc;
 
+use BrunoNatali\SysTema\Things\Thing;
 use BrunoNatali\SysTema\Managers\ManagerDefinesInterface;
 use BrunoNatali\Socket\ConnectionInterface;
 use BrunoNatali\EventLoop\LoopInterface;
@@ -33,31 +34,42 @@ use BrunoNatali\SysTema\Misc\Formatter;
 
 class HandleManagerForClients implements ManagerDefinesInterface
 {
-    Private $id;
-    Private $formatter;
+    Private $me;
 
     Private $mainSocket;
     Private $resourceType = "stream";
     Private $connForceSocket = false; // Force system use socket instead stream lib
 
-    function __construct(LoopInterface $loop, $name, $id = self::MANAGER_ID, $connForceSocket = false)
+    function __construct(LoopInterface &$loop, $name, $id = null, $connForceSocket = false)
     {
-        $this->formatter = new Formatter($name, $id);
+        $this->id = ($id === null ? self::MANAGER_ID : $id);
+echo "Criando interface principal para $name - $this->id" . PHP_EOL;
+        $this->me = new Thing($loop, $this->id, $name);
 
         $this->connForceSocket = $connForceSocket;
         $this->mainSocket = new TheClient($loop);
 
-        $this->id = $id;
-
+echo "Conectando ao manager : ";
         $this->mainSocket
             ->connect('unix://' . self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_ADDRESS, $this->resourceType, $this->connForceSocket)
             ->then(function (ConnectionInterface $connection) {
-                $data = json_encode(['request' => 'ID']);
-                $counterEnc = null;
-                if ($this->formatter->encode($data, self::MANAGER_ID, $counterEnc) === 0) $connection->write($data);
-echo $data;
+                $this->me->addConnection($connection);
+echo "Conectado" . PHP_EOL;
+                $that = &$this;
+                $this->me->sendMessage(['request' => 'ID'], self::MANAGER_ID,
+                    function ($data, $params) use ($that) {
+                        $data = json_decode($data, true);
+                        if (isset($data['response']) && $data['response'])
+                            $that->me->changeId($data['value']);
+                        return true;
+                    }
+                );
+
                 $connection->on('data', function ($data) use ($counterEnc){
-                    $this->formatter->decode($data, $counterDec);
+                    $this->me->formatter->decode($data, $counterDec);
+                    if (!$this->me->queue->listProccess($counterDec, $data)) {
+                        // If this data is not in the queue list
+                    }
                     var_dump($counterEnc, $counterDec, $data);
                 });
         });
