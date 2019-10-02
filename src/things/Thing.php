@@ -26,25 +26,54 @@
 namespace BrunoNatali\SysTema\Things;
 
 use BrunoNatali\SysTema\Misc\Formatter;
+use BrunoNatali\SysTema\Misc\Queue;
 use BrunoNatali\Socket\ConnectionInterface;
+use BrunoNatali\EventLoop\LoopInterface;
 
 class Thing
 {
     Protected $name;
     Protected $id;
+
     Protected $address = null;
     Private $connection = null;
 
     Public $formatter;
+    Public $queue;
 
     Public $authenticated = false;
 
-    function __construct($id = 0, string $name = null)
+    function __construct(LoopInterface &$loop, $id = 0, string $name = null)
     {
         $this->id = $id;
         $this->name = $name;
 
+        $this->queue = new Queue($loop);
         $this->formatter = new Formatter($name, $id);
+    }
+
+    Public function sendMessage($msg, $to, $onAnswer = null)
+    {
+        if (is_array($msg)) $msg = json_encode($msg);
+echo "Enviando mensagem '$msg' para '$to', ";
+        $counterEnc = null;
+        if ($this->formatter->encode($msg, $to, $counterEnc) === 0) {
+echo $counterEnc;
+            $this->queue->listAdd(
+                $counterEnc,
+                function ($params) use ($msg) {
+echo "executado";
+                    if ($this->connection !== null) $this->connection->write($msg);
+                },
+                $onAnswer
+            );
+echo "agendado";
+        }
+    }
+
+    Public function enQueue(mixed $value)
+    {
+        return $this->queue->push($value);
     }
 
     Public function changeName($name)
@@ -55,6 +84,13 @@ class Thing
     Public function changeAddress($address)
     {
         $this->address = $address;
+    }
+
+    Public function changeId($id)
+    {
+echo "Mudando ID para $id" . PHP_EOL;
+        $this->id = $id;
+        $this->formatter->changeId((string) $id);
     }
 
     Public function addConnection(ConnectionInterface &$conn)
