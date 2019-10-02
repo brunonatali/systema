@@ -43,7 +43,8 @@ class Collector implements ManagerDefinesInterface
 echo "Collector add thing ($name):";
         $this->things[ $thingsIndex ] = [
             'thing' => new Thing($loop, $thingsIndex, $name),
-            'handled' => $handled
+            'handled' => $handled,
+            'password' => null
         ];
         if ($name !== null && !is_bool($name)) {
             if (isset($this->names[ $name ])) throw new InvalidArgumentException('Name ' . $name . ' exists.');
@@ -51,6 +52,42 @@ echo "Collector add thing ($name):";
         }
 echo "OK" . PHP_EOL;
         return $thingsIndex;
+    }
+
+    Public function changeThingName($current, $new): bool
+    {
+        if (!isset($this->names[ $current ]) || isset($this->names[ $new ])) return false;
+        $theId = $this->names[ $current ];
+        $this->names[ $new ] = $theId;
+        unset($this->names[ $current ]);
+        return true;
+    }
+
+    Public function getThingName($id): string
+    {      
+        $toReturn = null;
+        $id = intval($id);
+        foreach ($this->names as $name => $val)
+            if ($val == $id) return (string) $name;
+        return $toReturn;
+    }
+
+    Public function setPasswordToThing($index, $pass = null): bool
+    {
+        if (!isset($this->things[ $index ])) return false;
+        if ($pass === null) {
+            $this->things[ $index ]['handled'] = true;
+        } else {
+            $this->things[ $index ]['password'] = $pass;
+        }
+        return true;
+    }
+
+    Public function authThing($index, $pass): bool
+    {
+        if (!isset($this->things[ $index ])) return false;
+        if ($pass !== $this->things[ $index ]['password']) return false;
+        return true;
     }
 
     Protected function removeThing($identifier)
