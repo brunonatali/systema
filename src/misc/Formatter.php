@@ -54,10 +54,10 @@ class Formatter
 
     function __construct(string $name, $id, array $config = [])
     {
+echo "Formatter ID: $id".PHP_EOL;
         $this->name = $name;
         $this->checkInputId($id);
         $this->id = $this->getId($id);
-
         $this->headerLenght = strlen($this->header);
 
         $this->easyStore = new Storage();
@@ -100,7 +100,7 @@ class Formatter
             $counter = substr($data, $this->easyStore->getValByName('counterStartLen'), $this->counterLen);
             // Check if package destination is this module
             if ($this->id != ($thisDataDestination = substr($data, $this->easyStore->getValByName('decodeDestinationStartLen'), $this->idLenght)))
-                return hexdec($thisDataDestination); // Not for him return destination decimal integer
+                return intval($thisDataDestination); // Not for him return destination decimal integer
 
             $data = substr($data, $this->payload);
             return 0;
@@ -109,6 +109,20 @@ class Formatter
             $data = substr($data, 0, $thisDataLen);
             return $this->decode($data);
         }
+    }
+
+    Public function getDataDestinationId(string &$data)
+    {
+        if ($this->id != ($thisDataDestination = substr($data, $this->easyStore->getValByName('decodeDestinationStartLen'), $this->idLenght)))
+            return intval($thisDataDestination); // Not for him return destination decimal integer
+        return 0;
+    }
+
+    Public function getDataSourceId(string &$data)
+    {
+        if ($this->id != ($thisDataSource = substr($data, $this->easyStore->getValByName('decodeSourceStartLen'), $this->idLenght)))
+            return intval($thisDataSource); // Not for him return destination decimal integer
+        return 0;
     }
 
     Public function changeId($id)
@@ -189,6 +203,8 @@ class Formatter
         $this->payload = $this->headerLenght + $this->dataLenght + $this->counterLen + ($this->idLenght * 2) + ($this->timeStampAdd ? $this->timeStampLen : 0);
         $this->easyStore->newVar('counterStartLen');
         $this->easyStore->setValByName('counterStartLen', $this->headerLenght + $this->dataLenght);
+        $this->easyStore->newVar('decodeSourceStartLen');
+        $this->easyStore->setValByName('decodeSourceStartLen', $this->payload - ($this->idLenght * 2) - ($this->timeStampAdd ? $this->timeStampLen : 0));
         $this->easyStore->newVar('decodeDestinationStartLen');
         $this->easyStore->setValByName('decodeDestinationStartLen', $this->payload - $this->idLenght - ($this->timeStampAdd ? $this->timeStampLen : 0));
     }
