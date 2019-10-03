@@ -40,7 +40,6 @@ class Collector implements ManagerDefinesInterface
     Protected function addThing(LoopInterface &$loop, string $name = null, $handled = false): int
     {
         $thingsIndex = count($this->things);
-echo "Collector add thing ($name):";
         $this->things[ $thingsIndex ] = [
             'thing' => new Thing($loop, $thingsIndex, $name),
             'handled' => $handled,
@@ -50,7 +49,6 @@ echo "Collector add thing ($name):";
             if (isset($this->names[ $name ])) throw new InvalidArgumentException('Name ' . $name . ' exists.');
             $this->names[ $name ] = $thingsIndex;
         }
-echo "OK" . PHP_EOL;
         return $thingsIndex;
     }
 
@@ -64,7 +62,7 @@ echo "OK" . PHP_EOL;
     }
 
     Public function getThingName($id): string
-    {      
+    {
         $toReturn = null;
         $id = intval($id);
         foreach ($this->names as $name => $val)

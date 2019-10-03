@@ -35,6 +35,7 @@ use BrunoNatali\SysTema\Misc\Formatter;
 class HandleManagerForClients implements ManagerDefinesInterface
 {
     Private $me;
+    Private $loop;
     Public $modules = [];
     Private $mainSocket;
     Private $resourceType = "stream";
@@ -43,26 +44,30 @@ class HandleManagerForClients implements ManagerDefinesInterface
     function __construct(LoopInterface &$loop, $name, $id = null, $connForceSocket = false)
     {
         $this->id = ($id === null ? self::MANAGER_ID : $id);
-echo "Criando interface principal para $name - $this->id" . PHP_EOL;
-        $this->me = new Thing($loop, $this->id, $name);
-
+        $this->loop = &$loop;
         $this->connForceSocket = $connForceSocket;
-        $this->mainSocket = new TheClient($loop);
 
+        $this->me = new Thing($this->loop, $this->id, $name);
+
+        $this->queueStartup();
+        $this->connectToManager();
+    }
+
+    Private function queueStartup()
+    {
         $that = &$this;
-        $this->me->queue->push(function () use ($that, $name) {
+        $this->me->queue->push(function () use ($that) {
             $that->me->sendMessage(
-                ['request' => 'CHANGE_NAME', 'value' => $name],
+                ['request' => 'CHANGE_NAME', 'value' => $that->me->getName()],
                 self::MANAGER_ID,
                 function ($data, $params) use ($that) {
                     $data = json_decode($data, true);
                     if (isset($data['response']) && $data['response'])
-echo "Alterado nome da aplicacao" . PHP_EOL;
                     return true;
                 }
             );
         });
-        $this->me->queue->push(function () use ($that, $name) {
+        $this->me->queue->push(function () use ($that) {
             $that->me->sendMessage(
                 ['request' => 'LIST_CLIENTS'],
                 self::MANAGER_ID,
@@ -70,43 +75,74 @@ echo "Alterado nome da aplicacao" . PHP_EOL;
                     $data = json_decode($data, true);
                     if (isset($data['response']) && $data['response'])
                         $that->modules = $data['value'];
-print_r($that->modules);
                     return true;
                 }
             );
         });
+    }
 
-echo "Conectando ao manager : ";
+    Private function connectToManager()
+    {
+        if (!$this->isManagerRunning()) {
+            $this->loop->addTimer(1, function (){
+                $this->connectToManager();
+            });
+            return false;
+        }
+        $that = &$this;
+        $this->mainSocket = new TheClient($this->loop);
         $this->mainSocket
             ->connect('unix://' . self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_ADDRESS, $this->resourceType, $this->connForceSocket)
             ->then(function (ConnectionInterface $connection) use ($that) {
-                $that->me->addConnection($connection);
-echo "Conectado" . PHP_EOL;
-                $that->me->sendMessage(
-                    ['request' => 'ID'],
-                    self::MANAGER_ID,
-                    function ($data, $params) use ($that) {
-echo "Func proc data - $data" . PHP_EOL;
-                        $data = json_decode($data, true);
-                        if (isset($data['response']) && $data['response']) {
-echo "Change id" . PHP_EOL;
-                            $that->me->changeId($data['value']);
-echo "QueueResume" . PHP_EOL;
-                            $that->me->queue->resume();
-                        }
-                        return true;
-                    }
-                );
 
-                $connection->on('data', function ($data) use ($that) {
-                    var_dump($that->me->formatter->decode($data, $counterDec));
-                    if (!$that->me->queue->listProccess($counterDec, $data)) {
-                        // If this data is not in the queue list
+            $connection->on('data', function ($data) use ($that) {
+                var_dump($that->me->formatter->decode($data, $counterDec));
+                if (!$that->me->queue->listProccess($counterDec, $data)) {
+                    // If this data is not in the queue list
 echo "Data not in the list".PHP_EOL;
+                }
+var_dump($counterDec, $data);
+            });
+
+            $connection->on('close', function () use ($that, $connection) {
+                $that->closeManagerConnection($connection);
+                $that->connectToManager();
+            });
+
+            $connection->on('error', function () use ($that, $connection) {
+                $that->closeManagerConnection($connection);
+                $that->connectToManager();
+            });
+
+            $that->me->setConnection($connection);
+            $that->me->sendMessage(
+                ['request' => 'ID'],
+                self::MANAGER_ID,
+                function ($data, $params) use ($that) {
+                    $data = json_decode($data, true);
+                    if (isset($data['response']) && $data['response']) {
+                        $that->me->changeId($data['value']);
+                        $that->me->queue->resume();
                     }
-                    var_dump($counterDec, $data);
-                });
+                    return true;
+                }
+            );
         });
+    }
+
+    Private function closeManagerConnection(ConnectionInterface $connection)
+    {
+echo "manager connection closed".PHP_EOL;
+        $connection->close();
+        $this->mainSocket = null;
+    }
+
+    Private function isManagerRunning(): bool
+    {
+        if(!file_exists(self::SYSTEM_RUN_FOLDER[0]) ||
+        !file_exists(self::SYSTEM_RUN_FOLDER[0] . self::MANAGER_NAME . '.pid'))
+            return false;
+        return true;
     }
 }
 ?>
