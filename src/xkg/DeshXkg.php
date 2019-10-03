@@ -66,7 +66,7 @@ class DeshXkg extends Collector implements XkgDefinesInterface
             $this->status = self::XKG_STATUS['waitManager'];
             return;
         }
-
+        
         $this->status = self::XKG_STATUS['building'];
         $this->manager = new HandleManager($this->loop, self::XKG_NAME, null, true);
 

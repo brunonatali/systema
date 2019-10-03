@@ -34,5 +34,7 @@ interface ManagerDefinesInterface extends GeneralDefinesInterface
     Const MANAGER_ACCEPTED_REQUEST = ['ID' => 1];
 
     Const MANAGER_ADDRESS = 'manager.sock';
+
+    Const MANAGER_BRDCST_CLIENTS_LIST_TIMER = 5;
 }
 ?>

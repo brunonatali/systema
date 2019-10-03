@@ -41,6 +41,8 @@ class Manager extends Collector implements ManagerDefinesInterface
     Private $server;
     Private $system;
 
+    Private $broadcastClientsTimer = null;
+
     function __construct(LoopInterface $loop = null)
     {
         $this->formatter = new Formatter(self::MANAGER_NAME, self::MANAGER_ID);
@@ -70,7 +72,7 @@ class Manager extends Collector implements ManagerDefinesInterface
                 } else {
                     $thingId = $that->addThing($that->loop, (string)$remoteAddress, true); // need to be implement auth, remove true
                     $that->things[ $thingId ]['thing']->changeAddress( $remoteAddress );
-                    $that->things[ $thingId ]['thing']->addConnection( $client );
+                    $that->things[ $thingId ]['thing']->setConnection( $client );
 
                     $client->on('data', function ($data) use ($that, $client, $thingId) {
                         $that->processData($client, $thingId, $data);
@@ -92,6 +94,24 @@ class Manager extends Collector implements ManagerDefinesInterface
         } catch (Exception $e) {
             //echo "$e"; Add some exceptions handling
         }
+    }
+
+    Private function broadcastNewClientsList($excludeId = [])
+    {
+        if ($this->broadcastClientsTimer !== null) $this->loop->cancelTimer($this->broadcastClientsTimer);
+        $this->broadcastClientsTimer = $this->loop->addTimer(self::MANAGER_BRDCST_CLIENTS_LIST_TIMER, function () {
+            $this->broadcastClientsTimer = false;
+            foreach ($this->things as $thingId => $thingDef) {
+                if (in_array($thingId, $excludeId)) continue;
+                $data = json_encode([
+                    'unsolicited' => 'LIST_CLIENTS',
+                    'value' => $this->names
+                ]);
+                if ($this->formatter->encode($data, $thingId) === 0) $thingDef['thing']->sendRaw($data);
+            }
+            // Help prevent set null if was called during foreach
+            if ($this->broadcastClientsTimer === false) $this->broadcastClientsTimer = null;
+        });
     }
 
     Private function searchByRemoteAddress($remoteAddress)
@@ -169,6 +189,9 @@ class Manager extends Collector implements ManagerDefinesInterface
                             'value' => $thingId
                         ]);
                     }
+                    $this->loop->addTimer(5, function () {
+                        $this->broadcastNewClientsList($thingId);
+                    });
                     break;
                 case 'LIST_CLIENTS':
                     $data = json_encode([
