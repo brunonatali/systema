@@ -55,20 +55,21 @@ class Thing
     Public function sendMessage($msg, $to, $onAnswer = null)
     {
         if (is_array($msg)) $msg = json_encode($msg);
-echo "Enviando mensagem '$msg' para '$to', ";
         $counterEnc = null;
         if ($this->formatter->encode($msg, $to, $counterEnc) === 0) {
-echo $counterEnc;
             $this->queue->listAdd(
                 $counterEnc,
                 function ($params) use ($msg) {
-echo "executado";
                     if ($this->connection !== null) $this->connection->write($msg);
                 },
                 $onAnswer
             );
-echo "agendado";
         }
+    }
+
+    Public function sendRaw($msg)
+    {
+        $this->connection->write($msg);
     }
 
     Public function enQueue(mixed $value)
@@ -88,12 +89,11 @@ echo "agendado";
 
     Public function changeId($id)
     {
-echo "Mudando ID para $id" . PHP_EOL;
         $this->id = $id;
         $this->formatter->changeId((string) $id);
     }
 
-    Public function addConnection(ConnectionInterface &$conn)
+    Public function setConnection(ConnectionInterface &$conn)
     {
         $this->connection = &$conn;
     }
@@ -101,6 +101,11 @@ echo "Mudando ID para $id" . PHP_EOL;
     Public function getAddress()
     {
         return $this->address;
+    }
+
+    Public function getName()
+    {
+        return $this->name;
     }
 }
 
