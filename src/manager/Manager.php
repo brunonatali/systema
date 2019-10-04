@@ -99,7 +99,7 @@ class Manager extends Collector implements ManagerDefinesInterface
     Private function broadcastNewClientsList($excludeId = [])
     {
         if ($this->broadcastClientsTimer !== null) $this->loop->cancelTimer($this->broadcastClientsTimer);
-        $this->broadcastClientsTimer = $this->loop->addTimer(self::MANAGER_BRDCST_CLIENTS_LIST_TIMER, function () {
+        $this->broadcastClientsTimer = $this->loop->addTimer(self::MANAGER_BRDCST_CLIENTS_LIST_TIMER, function () use ($excludeId){
             $this->broadcastClientsTimer = false;
             foreach ($this->things as $thingId => $thingDef) {
                 if (in_array($thingId, $excludeId)) continue;
@@ -190,7 +190,7 @@ class Manager extends Collector implements ManagerDefinesInterface
                         ]);
                     }
                     $this->loop->addTimer(5, function () use ($thingId){
-                        $this->broadcastNewClientsList($thingId);
+                        $this->broadcastNewClientsList([$thingId]);
                     });
                     break;
                 case 'LIST_CLIENTS':
