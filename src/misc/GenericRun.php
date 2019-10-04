@@ -25,6 +25,8 @@
 
 namespace BrunoNatali\SysTema\Misc;
 
+use BrunoNatali\EventLoop\LoopInterface;
+
 class GenericRun
 {
 
@@ -32,13 +34,13 @@ class GenericRun
      * Run the application by entering the event loop
      * @throws \RuntimeException If a loop was not previously specified
      */
-    Public function run()
+    Public function run(LoopInterface &$loop)
     {
-        if (null === $this->loop) {
+        if (null === $loop) {
             throw new \RuntimeException("A React Loop was not provided during instantiation");
         }
 echo "rodando" . PHP_EOL;
-        $this->loop->run();
+        $loop->run();
     }
 
 }
