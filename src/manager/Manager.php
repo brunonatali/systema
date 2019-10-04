@@ -189,7 +189,7 @@ class Manager extends Collector implements ManagerDefinesInterface
                             'value' => $thingId
                         ]);
                     }
-                    $this->loop->addTimer(5, function () {
+                    $this->loop->addTimer(5, function () use ($thingId){
                         $this->broadcastNewClientsList($thingId);
                     });
                     break;
