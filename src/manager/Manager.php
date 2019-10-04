@@ -102,7 +102,7 @@ class Manager extends Collector implements ManagerDefinesInterface
         $this->broadcastClientsTimer = $this->loop->addTimer(self::MANAGER_BRDCST_CLIENTS_LIST_TIMER, function () use ($excludeId){
             $this->broadcastClientsTimer = false;
             foreach ($this->things as $thingId => $thingDef) {
-                if (in_array($thingId, $excludeId)) continue;
+                if (in_array($thingId, $excludeId) || $thingId == 0) continue;
                 $data = json_encode([
                     'unsolicited' => 'LIST_CLIENTS',
                     'value' => $this->names
