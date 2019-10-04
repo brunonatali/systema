@@ -20,6 +20,8 @@
 			"BrunoNatali\\SysTema\\Misc\\": "src/misc",
 			"BrunoNatali\\SysTema\\Group\\": "src/group",
 			"BrunoNatali\\SysTema\\Things\\": "src/things",
+			"BrunoNatali\\SysTema\\Sockets\\": "src/sockets",
+			"BrunoNatali\\SysTema\\WebSockets\\": "src/webSockets",
 			"BrunoNatali\\SysTema\\Xkg\\": "src/xkg"
 		}
 	},
