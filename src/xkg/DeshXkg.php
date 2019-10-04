@@ -27,6 +27,7 @@ namespace BrunoNatali\SysTema\Xkg;
 
 use BrunoNatali\SysTema\Defines\GeneralDefines;
 use BrunoNatali\SysTema\Misc\SystemInteraction;
+use BrunoNatali\SysTema\Misc\GenericRun;
 use BrunoNatali\SysTema\Misc\HandleManagerForClients as HandleManager;
 use BrunoNatali\SysTema\Group\Collector;
 use BrunoNatali\EventLoop\Factory as LoopFactory;
@@ -40,10 +41,13 @@ class DeshXkg extends Collector implements XkgDefinesInterface
     Private $system;
     Private $manager;
 
+    Private $genericRun;
+
     Private $status = self::XKG_STATUS['stoped'];
 
     function __construct(LoopInterface $loop = null)
     {
+        $this->genericRun = new GenericRun();
         $this->system = new SystemInteraction();
 
         if (null === $loop) {
@@ -56,6 +60,14 @@ class DeshXkg extends Collector implements XkgDefinesInterface
         $this->instantiate();
     }
 
+    /**
+     * Used to call run() from another class
+     */
+    public function __call($method, $args)
+    {
+        $this->genericRun->$method($this->loop);
+    }
+
     Private function instantiate()
     {
         $that = &$this;
@@ -66,7 +78,7 @@ class DeshXkg extends Collector implements XkgDefinesInterface
             $this->status = self::XKG_STATUS['waitManager'];
             return;
         }
-        
+
         $this->status = self::XKG_STATUS['building'];
         $this->manager = new HandleManager($this->loop, self::XKG_NAME, null, true);
 
@@ -91,19 +103,6 @@ echo "Data received in ($xkgPort) ";
         $this->system->setAppInitiated(self::XKG_NAME);
         $this->instantiated = true;
         echo "iniciado" . PHP_EOL;
-    }
-
-    /**
-     * Run the application by entering the event loop
-     * @throws \RuntimeException If a loop was not previously specified
-     */
-    Public function run()
-    {
-        if (null === $this->loop) {
-            throw new \RuntimeException("A React Loop was not provided during instantiation");
-        }
-        echo "rodando" . PHP_EOL;
-        $this->loop->run();
     }
 
 }
