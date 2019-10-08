@@ -32,7 +32,7 @@ use BrunoNatali\SysTema\Misc\HandleManagerForClients as HandleManager;
 use BrunoNatali\SysTema\Group\Collector;
 use BrunoNatali\EventLoop\Factory as LoopFactory;
 use BrunoNatali\EventLoop\LoopInterface;
-use BrunoNatali\Socket\ConnectionInterface;
+use BrunoNatali\Socket\ConnectionInterface as TheConnection;
 use BrunoNatali\Socket\UnixConnector as UnixReactor;
 
 class DeshXkg extends Collector implements XkgDefinesInterface
@@ -40,9 +40,11 @@ class DeshXkg extends Collector implements XkgDefinesInterface
     Private $loop;
     Private $system;
     Private $manager;
-
     Private $genericRun;
 
+    Private $server = [];
+    Private $network = [];
+    Private $zeroe;
     Private $status = self::XKG_STATUS['stoped'];
 
     function __construct(LoopInterface $loop = null)
@@ -55,6 +57,8 @@ class DeshXkg extends Collector implements XkgDefinesInterface
         } else {
             $this->loop = &$loop;
         }
+
+        $this->zeroe = hex2bin('00');
 
         $this->status = self::XKG_STATUS['started'];
         $this->instantiate();
@@ -82,22 +86,30 @@ class DeshXkg extends Collector implements XkgDefinesInterface
         $this->status = self::XKG_STATUS['building'];
         $this->manager = new HandleManager($this->loop, self::XKG_NAME, null, true);
 
-
         foreach (self::XKG_SERVER_PORTS as $xkgPort) {
-            if(file_exists(self::SYSTEM_TEMP_FOLDER . $xkgPort))  unlink(self::SYSTEM_TEMP_FOLDER . $xkgPort);
-echo "criando $xkgPort" . PHP_EOL;
-            $this->server[$xkgPort] = new UnixReactor($this->loop);
+            $socketFileAddress = self::SYSTEM_TEMP_FOLDER . $xkgPort;
+            if(file_exists($socketFileAddress))  unlink($socketFileAddress);
 
-            $this->server[$xkgPort]
-                ->connect('unix://' . self::SYSTEM_TEMP_FOLDER . $xkgPort, "dgram")
-                ->then(function (BrunoNatali\Socket\ConnectionInterface $connection) use ($xkgPort, $that) {
-echo "Conectado $xkgPort" . PHP_EOL;
-        			$connection->on('data', function ($data) use ($xkgPort, $that) {
-echo "Data received in ($xkgPort) ";
-                        var_dump($data);
-        			});
-        		}
-        	);
+            switch ($xkgPort) {
+                    case 'mngt':
+                    $this->server[ 'mngt' ] =  [
+                        'connection' => new UnixReactor($this->loop),
+                        'data' => self::XKG_DEFAULT_DATA
+                    ];
+                    $this->server[ 'mngt' ][ 'connection' ]
+                        ->connect('unix://' . $socketFileAddress, "dgram")
+                        ->then(function (TheConnection $connection) use ($that) {
+                    			$connection->on('data', function ($data) use ($that, $connection) {
+echo "Data received in (mngt) from (" . $connection->getRemoteAddress(true) . "): ";
+                                    $that->dataOnMngt($data);
+                    			});
+                    		}
+                    	);
+                    break;
+            }
+            $this->system->setFunctionOnAppAborted(function () use ($socketFileAddress) {
+                unlink($socketFileAddress);
+            });
         }
 
         $this->system->setAppInitiated(self::XKG_NAME);
@@ -105,4 +117,74 @@ echo "Data received in ($xkgPort) ";
         echo "iniciado" . PHP_EOL;
     }
 
+    Private function dataOnMngt($data)
+    {
+var_dump(bin2hex($data));
+        $thisLenght = strlen($data);
+        $this->server[ 'mngt' ][ 'data' ][ 'received' ][ 'bytes' ] += $thisLenght;
+        $thisIPv6 = substr($data, 0, 16);
+
+        if ($thisLenght == 66 || $thisLenght ==  76) {
+            $thisParentIPv6 = substr($data, 16, 16);
+
+            if ($thisIPv6 == $thisParentIPv6) { /* KA from Manager*/
+                $tmp = array(
+//        			'bytes_sent'=> hexdec(bin2hex($par[2]{8} . $par[2]{7} . $par[2]{6} . $par[2]{5})),
+  //      			'pkt_sent'	=> hexdec(bin2hex($par[2]{12} . $par[2]{11} . $par[2]{10} . $par[2]{9})),
+    //    			'noack'		=> hexdec(bin2hex($par[3]{0} . $par[2]{15} . $par[2]{14} . $par[2]{13})),
+      //  			'num_routes'=> hexdec($nr{1} . $nr{0}),
+        //			'num_nbr'	=> hexdec($nbr{1} . $nbr{0}),
+        //			'ts'		=> microtime(true)
+        		);
+            } else { /* KA from Node*/
+                $this->createNewNode($thisIPv6); 
+                $this->network[ $thisIPv6 ][ 'node' ]->processKA($thisParentIPv6, substr($data, 32));
+            }
+var_dump(bin2hex($thisIPv6), bin2hex($thisParentIPv6));
+            $this->server[ 'mngt' ][ 'data' ][ 'received' ][ 'packages' ] ++;
+        } else {
+            if (substr($data, 16, 4) === "nbr:") {
+                $thisAllNbr = str_split(substr($data, 20), 16);
+                $break = false;
+                foreach ($thisAllNbr as $key => $thisNbr) {
+                    $thisNbrMac = substr($thisNbr, 0, 8);
+                    if ($break || !$this->checkIsValidMac($thisNbrMac)) {
+                        unset($thisAllNbr[$key]);
+                        $break = true;
+                        continue;
+                    }
+                    $thisAllNbr[$key] = [
+                        'mac' => bin2hex($thisNbrMac),
+                        'etx' => bin2hex(substr($thisNbr, 8, 2)),
+                        'rank' => bin2hex(substr($thisNbr, 10, 2)),
+                        'rssi' => bin2hex(substr($thisNbr, 12, 14)),
+                        'last-tx' => bin2hex(substr($thisNbr, 14)),
+                    ];
+                }
+
+//var_dump($thisAllNbr);
+                $this->server[ 'mngt' ][ 'data' ][ 'received' ][ 'packages' ] ++;
+            } else { /* ERROR */
+                $this->server[ 'mngt' ][ 'data' ][ 'error'][] = $data;
+            }
+        }
+var_dump($this->server[ 'mngt' ][ 'data' ]);
+    }
+
+    Private function createNewNode(string $thisIPv6)
+    {
+        if (isset($this->network[ $thisIPv6 ])) return;
+        $this->network[ $thisIPv6 ] = [
+            'node' => new Node($thisIPv6, $this->loop)
+        ];
+    }
+
+    Private function checkIsValidMac(string $mac): bool
+    {
+        $pontuation = 4;
+        for ($i = 0 ; $i < 4 ; $i++) {
+            if ($this->zeroe == $mac{$i}) $pontuation --;
+        }
+        return ($pontuation > 2 ? true : false);
+    }
 }
