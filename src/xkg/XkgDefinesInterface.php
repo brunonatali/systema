@@ -34,6 +34,18 @@ interface XkgDefinesInterface
 
     Const XKG_ADDRESS = 'xkg.sock';
 
+    Const XKG_DEFAULT_DATA = [
+        'received' => [
+            'packages' => 0,
+            'bytes' => 0
+        ],
+        'sent' => [
+            'packages' => 0,
+            'bytes' => 0
+        ],
+        'error' => []
+    ];
+
     Const XKG_STATUS = [
         'stoped' => 0x0,
         'started' => 0x1,
