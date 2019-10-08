@@ -33,25 +33,44 @@ class Queue
     Private $main;
     Private $loop;
     Private $timer;
+    Private $timeToAnswer;
     Private $listById = [];
     Private $running = false;
     Private $enabled = false;
     Private $waitToRun = false;
     Private $lastErrorString;
 
-    function __construct(LoopInterface &$loop)
+    function __construct(LoopInterface &$loop, $timeToAnswer = 0)
     {
         $this->main = new SplQueue();
         $this->loop = &$loop;
+        $this->timeToAnswer = $timeToAnswer;
     }
 
-    Public function listAdd(string $id = null, $onAdd = null, $onData = null)
+    /*
+    * $retryOnError could be integer or bool, if is integer value will be decreased each time function is called
+    */
+    Public function listAdd(string &$id = null, $onAdd = null, $onData = null, $onError = false, $retryOnError = null)
     {
         if ($id === null ) $id = $this->genId();
         $this->listById[$id] = [
             'id' => $id,
             'onAdd' => $onAdd,
-            'onData' => $onData
+            'onData' => $onData,
+            'onError' => $onError,
+            'retryOnError' => (is_int($retryOnError) ? $retryOnError - 1 : $retryOnError),
+            'timer' => ($this->timeToAnswer === 0 ? null : $this->loop->addTimer($this->timeToAnswer, function () use ($id){
+                if (is_callable($this->listById[$id]['onError']))
+                    $this->listById[$id]['onError']($params = $this->listById[$id]);
+                if ($this->listById[$id]['retryOnError'])
+                    $this->listAdd(
+                        $this->listById[$id][ 'id' ],
+                        $this->listById[$id][ 'onAdd' ],
+                        $this->listById[$id][ 'onData' ],
+                        $this->listById[$id][ 'onError' ],
+                        $this->listById[$id][ 'retryOnError' ]
+                    );
+            }))
         ];
         if (is_callable($this->listById[$id]['onAdd'])) {
             echo "is callable";
