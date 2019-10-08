@@ -45,9 +45,10 @@ class Queue
         $this->loop = &$loop;
     }
 
-    Public function listAdd(string $id = "", $onAdd = null, $onData = null)
+    Public function listAdd(string $id = null, $onAdd = null, $onData = null)
     {
-        if ($id != "") $this->listById[$id] = [
+        if ($id === null ) $id = $this->genId();
+        $this->listById[$id] = [
             'id' => $id,
             'onAdd' => $onAdd,
             'onData' => $onData
@@ -126,5 +127,11 @@ class Queue
             $this->waitToRun = false;
             $this->next();
         }
+    }
+
+    Private function genId(): int
+    {
+        while(isset($this->listById[$temp = rand()])) {}
+        return $temp;
     }
 }
