@@ -54,7 +54,6 @@ class Formatter
 
     function __construct(string $name, $id, array $config = [])
     {
-echo "Formatter ID: $id".PHP_EOL;
         $this->name = $name;
         $this->checkInputId($id);
         $this->id = $this->getId($id);
