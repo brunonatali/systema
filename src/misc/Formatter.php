@@ -73,7 +73,7 @@ class Formatter
             $this->checkInputId($destination);
 
             // {header}{len}{counter}{source}{destination}{if time stamp}{data}
-            $counter = $this->getCounter($counter);
+            $counter = $this->getCounter(($counter !== null ? intval($counter) : $counter));
             $data = $this->header . $this->getDataLenght($data) . $counter . $this->id . $this->getId($destination) .  $this->getTimeStamp() . $data;
             return 0;
         } catch (InvalidArgumentException $e) {
