@@ -36,6 +36,7 @@ class HandleManagerForClients implements ManagerDefinesInterface
 {
     Private $me;
     Private $loop;
+    Private $onData;
     Public $modules = [];
     Private $mainSocket;
     Private $resourceType = "stream";
@@ -99,6 +100,7 @@ class HandleManagerForClients implements ManagerDefinesInterface
                 var_dump($that->me->formatter->decode($data, $counterDec));
                 if (!$that->me->queue->listProccess($counterDec, $data)) {
                     // If this data is not in the queue list
+                    if (is_callable($this->onData)) $this->onData($data);
 echo "Data not in the list".PHP_EOL;
                 }
 var_dump($counterDec, $data);
@@ -128,6 +130,11 @@ var_dump($counterDec, $data);
                 }
             );
         });
+    }
+
+    Public function functionOnData($func)
+    {
+        if (is_callable($func)) $this->onData = $func;
     }
 
     Private function closeManagerConnection(ConnectionInterface $connection)
