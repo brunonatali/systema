@@ -34,6 +34,8 @@ interface XkgDefinesInterface
 
     Const XKG_ADDRESS = 'xkg.sock';
 
+    Const XKG_COMMAND_TIME_TO_ANSWER = 3; /*Time in seconds (could be 0.1 - 100 miliseconds)*/
+
     Const XKG_DEFAULT_DATA = [
         'received' => [
             'packages' => 0,
@@ -52,6 +54,14 @@ interface XkgDefinesInterface
         'waitManager' => 0x2,
         'building' => 0x03,
         'redy' => 0x04
+    ];
+
+    Const XKG_ERRORS = [
+        'node_not_exist' => 0x01,
+        'command_not_understood' => 0x02,
+        'wrong_command_source' => 0x03,
+        'command_already_queued' => 0x04,
+        'command_answer_not_understood' => 0x05
     ];
 }
 ?>
