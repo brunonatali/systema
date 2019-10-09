@@ -60,6 +60,7 @@ class Queue
             'onError' => $onError,
             'retryOnError' => (is_int($retryOnError) ? $retryOnError - 1 : $retryOnError),
             'timer' => ($this->timeToAnswer === 0 ? null : $this->loop->addTimer($this->timeToAnswer, function () use ($id){
+                $this->loop->cancelTimer($this->listById[$id][ 'timer' ]);
                 if (is_callable($this->listById[$id]['onError']))
                     $this->listById[$id]['onError']($params = $this->listById[$id]);
                 if ($this->listById[$id]['retryOnError'])
@@ -70,6 +71,9 @@ class Queue
                         $this->listById[$id][ 'onError' ],
                         $this->listById[$id][ 'retryOnError' ]
                     );
+                else {
+                    $this->listRemove($id);
+                }
             }))
         ];
         if (is_callable($this->listById[$id]['onAdd'])) {
@@ -84,6 +88,7 @@ class Queue
         $toReturn = true;
         if (!isset($this->listById[$id])) return false;
 
+        if ($this->listById[$id][ 'timer' ] !== null) $this->loop->cancelTimer($this->listById[$id][ 'timer' ]);
         if (is_callable($this->listById[$id]['onData']))
             $toReturn = $this->listById[$id]['onData']($data, $params = $this->listById[$id]);
 
@@ -95,6 +100,11 @@ class Queue
     Public function listRemove(string $id)
     {
         if (isset($this->listById[$id])) unset($this->listById[$id]);
+    }
+
+    Public function getTryByListId($id)
+    {
+        return $this->listById[$id][ 'retryOnError' ];
     }
 
     Public function push($value, number $id = null)
@@ -146,6 +156,11 @@ class Queue
             $this->waitToRun = false;
             $this->next();
         }
+    }
+
+    Public function isIdInTheList($id)
+    {
+        return isset($this->listById[$id]);
     }
 
     Private function genId(): int
