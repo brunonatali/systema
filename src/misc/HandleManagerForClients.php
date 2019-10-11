@@ -36,7 +36,8 @@ class HandleManagerForClients implements ManagerDefinesInterface
 {
     Private $me;
     Private $loop;
-    Private $onData;
+    Private $onData = [];
+    Private $onJson = [];
     Public $modules = [];
     Private $mainSocket;
     Private $resourceType = "stream";
@@ -52,6 +53,16 @@ class HandleManagerForClients implements ManagerDefinesInterface
 
         $this->queueStartup();
         $this->connectToManager();
+
+        $this->functionOnData(function ($data) {
+            /**
+            * Add primary function to proccess received json
+            */
+            if (($decodedJson = json_decode($data, true)) !== false) {
+                return $this->functionWhenJSON($decodedJson);
+            }
+            return false;
+        });
     }
 
     Private function queueStartup()
@@ -97,13 +108,32 @@ class HandleManagerForClients implements ManagerDefinesInterface
             ->then(function (ConnectionInterface $connection) use ($that) {
 
             $connection->on('data', function ($data) use ($that) {
-                var_dump($that->me->formatter->decode($data, $counterDec));
-                if (!$that->me->queue->listProccess($counterDec, $data)) {
-                    // If this data is not in the queue list
-                    if (is_callable($this->onData)) $this->onData($data);
-echo "Data not in the list".PHP_EOL;
+                $originalData = $data;
+                if (($destination = $that->me->formatter->decode($data, $counterDec)) !== false) {
+                    if ($destination === 0) { // is for me
+
+                        $result = true;
+                        if ($that->me->queue->isIdInTheList($counterDec)) {
+                            /**
+                            * Pre proccess queue and let functions know if this data need to be proccessed by internal env
+                            */
+                            $result = $that->me->queue->listProccess($counterDec, $data);
+                        } else {
+                            /**
+                            * Proccess internal env functions
+                            */
+                            echo "Data not in the list" . PHP_EOL;
+                            foreach ($this->onData as $key => $onDataFunc) {
+                                echo "Proccessing onDataFunc ($key)" . PHP_EOL;
+                                $result = $result AND $onDataFunc($data);
+                            }
+                        }
+                        return $result; // Now this return is ommited, but could be used to answer caller
+                    }
+                } else {
+                    /* DATA ERROR - NEED TO BE HANDLED*/
                 }
-var_dump($counterDec, $data);
+                var_dump($counterDec, $data);
             });
 
             $connection->on('close', function () use ($that, $connection) {
@@ -132,14 +162,56 @@ var_dump($counterDec, $data);
         });
     }
 
-    Public function functionOnData($func)
+    Public function functionOnData($func, $index = null): bool
     {
-        if (is_callable($func)) $this->onData = $func;
+        if (is_callable($func)) {
+            if (is_int($index))
+                array_splice( $this->onData, $index, 0, $func );
+            else
+                $this->onData[] = $func;
+            return true;
+        }
+        return false;
+    }
+
+    Public function functionWhenJSON($json = null): bool
+    {
+        if (is_callable($json)) {
+            $this->onJson[] = $json;
+            return true;
+        } else if (!is_array($json)) {
+            return false;
+        }
+
+        if (!isset($json['request'])) {
+            $toReturn = true;
+            foreach ($this->onJson as $key => $onJsonFunc) {
+                echo "Proccessing onJsonFunc ($key)" . PHP_EOL;
+                $toReturn = $toReturn AND $onJsonFunc($json);
+            }
+            return $toReturn;
+        }
+
+        /**
+        * Proccess
+        */
+        switch ($data['request']) {
+            case 'teste':
+                // Implement module / class change configuration
+                break;
+
+            default:
+                foreach ($this->onJson as $key => $onJsonFunc) {
+                    echo "Proccessing onJsonFunc ($key)" . PHP_EOL;
+                    $toReturn = $toReturn AND $onJsonFunc($json);
+                }
+            break;
+        }
     }
 
     Private function closeManagerConnection(ConnectionInterface $connection)
     {
-echo "manager connection closed".PHP_EOL;
+        echo "manager connection closed".PHP_EOL;
         $connection->close();
         $this->mainSocket = null;
     }
