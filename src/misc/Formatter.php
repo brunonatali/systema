@@ -50,6 +50,7 @@ class Formatter
 
     Private $easyStore;
 
+    Private $lastDataSource = 0;
     Private $lastErrorString = "";
 
     function __construct(string $name, $id, array $config = [])
@@ -97,11 +98,14 @@ class Formatter
         // Check data len
         if (strlen($data) == ($thisDataLen = hexdec(substr($data, $this->headerLenght, $this->dataLenght)))) {
             $counter = substr($data, $this->easyStore->getValByName('counterStartLen'), $this->counterLen);
-            // Check if package destination is this module
-            if ($this->id != ($thisDataDestination = substr($data, $this->easyStore->getValByName('decodeDestinationStartLen'), $this->idLenght)))
-                return intval($thisDataDestination); // Not for him return destination decimal integer
 
+            $thisDataDestination = $this->getDataDestinationId($data);
+            $this->lastDataSource = $this->getDataSourceId($data);
             $data = substr($data, $this->payload);
+
+             // Not for this module return destination id, decimal integer
+            if ($this->id != $thisDataDestination) return intval($thisDataDestination);
+
             return 0;
         } else {
             $this->buffer = substr($data, $thisDataLen * -1);
@@ -110,14 +114,19 @@ class Formatter
         }
     }
 
-    Public function getDataDestinationId(string &$data)
+    Public function getDataDestinationId(string &$data): int
     {
         return intval(substr($data, $this->easyStore->getValByName('decodeDestinationStartLen'), $this->idLenght));
     }
 
-    Public function getDataSourceId(string &$data)
+    Public function getDataSourceId(string &$data): int
     {
         return intval(substr($data, $this->easyStore->getValByName('decodeSourceStartLen'), $this->idLenght));
+    }
+
+    Public function getLastDataSource(): int
+    {
+        return $this->lastDataSource;
     }
 
     Public function changeId($id)
