@@ -54,14 +54,43 @@ class HandleManagerForClients implements ManagerDefinesInterface
         $this->queueStartup();
         $this->connectToManager();
 
-        $this->functionOnData(function ($data) {
-            /**
-            * Add primary function to proccess received json
-            */
-            if (($decodedJson = json_decode($data, true)) !== false) {
-                return $this->functionWhenJSON($decodedJson);
+        /**
+        * Add starter function to proccess received json
+        */
+        $this->addFunctionOnData(function ($data) {
+            if (($decodedJson = json_decode($data, true)) === false) return false;
+
+            $toReturn = true;
+            foreach ($this->onJson as $key => $onJsonFunc) {
+                echo "Proccessing onJsonFunc  1 ($key)" . PHP_EOL;
+
+                if (($result = $onJsonFunc($decodedJson)) !== false) {
+                    $toReturn = $result;
+                    break;
+                }
             }
-            return false;
+
+            return $toReturn;
+        });
+
+        /**
+        * Add starter JSON switch to proccess requests to module / class
+        */
+        $this->addFunctionWhenJSON(function ($data) {
+            if (!is_array($data) || !isset($data['request'])) return false;
+
+            switch ($data['request']) {
+                case 'teste':
+                    // Implement module / class change configuration
+                    $toReturn = 'case result could be bool, string ... any';
+                    break;
+
+                default:
+                    $toReturn = false;
+                    break;
+            }
+
+            return $toReturn;
         });
     }
 
@@ -112,10 +141,10 @@ class HandleManagerForClients implements ManagerDefinesInterface
                 if (($destination = $that->me->formatter->decode($data, $counterDec)) !== false) {
                     if ($destination === 0) { // is for me
 
-                        $result = true;
+                        $result = false;
                         if ($that->me->queue->isIdInTheList($counterDec)) {
                             /**
-                            * Pre proccess queue and let functions know if this data need to be proccessed by internal env
+                            * Proccess module queue - If is answer
                             */
                             $result = $that->me->queue->listProccess($counterDec, $data);
                         } else {
@@ -125,7 +154,11 @@ class HandleManagerForClients implements ManagerDefinesInterface
                             echo "Data not in the list" . PHP_EOL;
                             foreach ($this->onData as $key => $onDataFunc) {
                                 echo "Proccessing onDataFunc ($key)" . PHP_EOL;
-                                $result = $result AND $onDataFunc($data);
+
+                                if (($result = $onDataFunc($data)) !== false) {
+                                    $toReturn = $result;
+                                    break;
+                                }
                             }
                         }
                         return $result; // Now this return is ommited, but could be used to answer caller
@@ -162,7 +195,7 @@ class HandleManagerForClients implements ManagerDefinesInterface
         });
     }
 
-    Public function functionOnData($func, $index = null): bool
+    Public function addFunctionOnData($func, $index = null): bool
     {
         if (is_callable($func)) {
             if (is_int($index))
@@ -174,38 +207,14 @@ class HandleManagerForClients implements ManagerDefinesInterface
         return false;
     }
 
-    Public function functionWhenJSON($json = null): bool
+    Public function addFunctionWhenJSON($func, $index = null): bool
     {
-        if (is_callable($json)) {
-            $this->onJson[] = $json;
+        if (is_callable($func)) {
+            if (is_int($index))
+                array_splice( $this->onJson, $index, 0, $func );
+            else
+                $this->onJson[] = $func;
             return true;
-        } else if (!is_array($json)) {
-            return false;
-        }
-
-        if (!isset($json['request'])) {
-            $toReturn = true;
-            foreach ($this->onJson as $key => $onJsonFunc) {
-                echo "Proccessing onJsonFunc ($key)" . PHP_EOL;
-                $toReturn = $toReturn AND $onJsonFunc($json);
-            }
-            return $toReturn;
-        }
-
-        /**
-        * Proccess
-        */
-        switch ($data['request']) {
-            case 'teste':
-                // Implement module / class change configuration
-                break;
-
-            default:
-                foreach ($this->onJson as $key => $onJsonFunc) {
-                    echo "Proccessing onJsonFunc ($key)" . PHP_EOL;
-                    $toReturn = $toReturn AND $onJsonFunc($json);
-                }
-            break;
         }
     }
 
