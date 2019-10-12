@@ -57,13 +57,17 @@ class Thing
         if (is_array($msg)) $msg = json_encode($msg);
         $counterEnc = null;
         if ($this->formatter->encode($msg, $to, $counterEnc) === 0) {
-            $this->queue->listAdd(
-                $counterEnc,
-                function ($params) use ($msg) {
-                    if ($this->connection !== null) $this->connection->write($msg);
-                },
-                $onAnswer
-            );
+            if ($onAnswer === null) {
+                $this->connection->write($msg);
+            } else {
+                $this->queue->listAdd(
+                    $counterEnc,
+                    function ($params) use ($msg) {
+                        if ($this->connection !== null) $this->connection->write($msg);
+                    },
+                    $onAnswer
+                );
+            }
         }
     }
 
