@@ -137,7 +137,6 @@ class HandleManagerForClients implements ManagerDefinesInterface
             ->then(function (ConnectionInterface $connection) use ($that) {
 
             $connection->on('data', function ($data) use ($that) {
-                $originalData = $data;
                 if (($destination = $that->me->formatter->decode($data, $counterDec)) !== false) {
                     if ($destination === 0) { // is for me
 
@@ -152,16 +151,34 @@ class HandleManagerForClients implements ManagerDefinesInterface
                             * Proccess internal env functions
                             */
                             echo "Data not in the list" . PHP_EOL;
+
+                            $thisDataSource = $that->me->formatter->getLastDataSource();
+                            $tempListId = $thisDataSource . '-' . $counterDec;
+                            $tempListIdBkp = $tempListId;
                             foreach ($this->onData as $key => $onDataFunc) {
                                 echo "Proccessing onDataFunc ($key)" . PHP_EOL;
 
-                                if (($result = $onDataFunc($data)) !== false) {
+                                if (($result = $onDataFunc($data, &$tempListId)) !== false) {
                                     $toReturn = $result;
                                     break;
                                 }
                             }
+
+                            if ($tempListId !== $tempListIdBkp) {
+                                $that->me->queue->listAdd(
+                                    $tempListIdBkp,
+                                    null,
+                                    function ($data, $params) use ($that, $thisDataSource, $counterDec) {
+                                        $that->me->formatter->encode($data, $thisDataSource, $counterDec);
+                                        $that->me->sendMessage($data, $thisDataSource);
+                                    }
+                                );
+                            } else if ($result !== false ) {
+                                $that->me->formatter->encode($result, $thisDataSource, $counterDec);
+                                $that->me->sendMessage($result, $thisDataSource);
+                            }
                         }
-                        return $result; // Now this return is ommited, but could be used to answer caller
+                        return ; // Now this return is ommited, but could be used to answer caller
                     }
                 } else {
                     /* DATA ERROR - NEED TO BE HANDLED*/
